@@ -6,51 +6,96 @@ import Badge from '~/components/ui/Badge.vue'
 import Skeleton from '~/components/ui/Skeleton.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
+import type { Project as ApiProject } from '~/types/api'
 
-interface Project {
+interface DisplayProject {
   id: string
+  slug: string
   title: string
   description: string
   thumbnail?: string
+  galleryUrls: string[]
+  videoUrl?: string
+  externalUrl?: string
+  githubUrl?: string
   tags: string[]
   likes: number
-  releaseDate: string
-  content: string
+  isLiked: boolean
+  publishedAt: string
+  featured: boolean
 }
+
+function transformProject(project: ApiProject): DisplayProject {
+  return {
+    id: project.id,
+    slug: project.slug,
+    title: project.title,
+    description: project.description,
+    thumbnail: project.coverImageUrl ?? undefined,
+    galleryUrls: project.galleryUrls || [],
+    videoUrl: project.videoUrl ?? undefined,
+    externalUrl: project.externalUrl ?? undefined,
+    githubUrl: project.githubUrl ?? undefined,
+    tags: project.tags.map(t => t.name),
+    likes: project.likesCount || 0,
+    isLiked: project.isLiked || false,
+    publishedAt: project.publishedAt || project.createdAt,
+    featured: project.featured,
+  }
+}
+
+const { getProject, likeProject, unlikeProject } = useProjects()
 
 const route = useRoute()
 const id = (route.params.id as string) || '1'
 
-const project = ref<Project | null>(null)
+const project = ref<DisplayProject | null>(null)
 const isLoading = ref(true)
 const error = ref<string | null>(null)
-
-// Mock lookup - will be replaced with real API
-const mockProjects: Record<string, Project> = {
-  '1': { id: '1', title: 'Desert Wanderer', description: 'An open-world adventure game set in a vast desert landscape', thumbnail: '/desert-game-landscape.jpg', tags: ['Action', 'Adventure', 'Open World'], likes: 245, releaseDate: '2024-12', content: 'Desert Wanderer is our flagship open-world adventure game that takes players on an epic journey across vast, sun-scorched landscapes. With stunning visuals, deep exploration mechanics, and a rich narrative, players discover ancient mysteries buried beneath the sands.' },
-  '2': { id: '2', title: 'Sunset Chronicles', description: 'A heartwarming animated short about finding home', thumbnail: '/animated-sunset-scene.jpg', tags: ['Drama', 'Family', 'Short Film'], likes: 189, releaseDate: '2024-11', content: 'Sunset Chronicles tells the touching story of a traveler searching for home. Through beautiful hand-painted animation and an evocative soundtrack, we explore themes of belonging, memory, and the places that shape us.' },
-}
+const isLiked = ref(false)
+const likes = ref(0)
 
 onMounted(async () => {
   isLoading.value = true
   error.value = null
   
   try {
-    // Simulate API call - replace with real fetch
-    await new Promise((r) => setTimeout(r, 500))
+    const result = await getProject(id)
     
-    const fetchedProject = mockProjects[id]
-    if (fetchedProject) {
-      project.value = fetchedProject
+    if (result) {
+      project.value = transformProject(result)
+      likes.value = project.value.likes
+      isLiked.value = project.value.isLiked
     } else {
       error.value = 'not_found'
     }
-  } catch (e) {
-    error.value = 'error'
+  } catch (e: any) {
+    console.error('Failed to fetch project:', e)
+    error.value = e.message || 'error'
   } finally {
     isLoading.value = false
   }
 })
+
+async function handleLike() {
+  if (!project.value) return
+  
+  try {
+    if (isLiked.value) {
+      const result = await unlikeProject(project.value.id)
+      isLiked.value = false
+      likes.value = result.likesCount
+    } else {
+      const result = await likeProject(project.value.id)
+      isLiked.value = true
+      likes.value = result.likesCount
+    }
+  } catch (e: any) {
+    // If like fails (e.g., not logged in), show auth modal
+    const { showAuthModal } = useAuth()
+    showAuthModal()
+  }
+}
 </script>
 
 <template>
@@ -97,7 +142,7 @@ onMounted(async () => {
       <template v-else-if="project">
         <div :class="$style.projectSection">
           <h1 :class="$style.title">{{ project.title }}</h1>
-          <div :class="$style.meta">{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ project.likes }} likes</div>
+          <div :class="$style.meta">{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ likes }} likes</div>
           <div :class="$style.imageWrapper">
             <img :src="project.thumbnail" :alt="project.title" :class="$style.image" />
           </div>

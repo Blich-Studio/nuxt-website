@@ -1,53 +1,74 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
 import Skeleton from '../../components/ui/Skeleton.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
+import type { ProjectListItem } from '~/types/api'
 
-interface Project {
+// Display format for projects
+interface DisplayProject {
   id: string
+  slug: string
   title: string
   description: string
-  type: string
   thumbnail?: string
   tags: string[]
   likes: number
-  releaseDate: string
+  publishedAt: string
+  featured: boolean
 }
 
-const mockProjects: Project[] = [
-  { id: '1', title: 'Desert Wanderer', description: 'An open-world adventure game set in a vast desert landscape', type: 'game', thumbnail: '/desert-game-landscape.jpg', tags: ['Action', 'Adventure', 'Open World'], likes: 245, releaseDate: '2024-12' },
-  { id: '2', title: 'Sunset Chronicles', description: 'A heartwarming animated short about finding home', type: 'film', thumbnail: '/animated-sunset-scene.jpg', tags: ['Drama', 'Family', 'Short Film'], likes: 189, releaseDate: '2024-11' },
-  { id: '3', title: 'Pixel Oasis', description: 'Retro-style puzzle platformer with modern mechanics', type: 'game', thumbnail: '/pixel-game-desert.jpg', tags: ['Puzzle', 'Platformer', 'Retro'], likes: 312, releaseDate: '2024-10' },
-  { id: '4', title: 'Dancing Dunes', description: 'Abstract motion graphics exploring desert aesthetics', type: 'animation', thumbnail: '/abstract-desert-animation.jpg', tags: ['Motion Graphics', 'Abstract', 'Experimental'], likes: 156, releaseDate: '2024-09' },
-  { id: '5', title: 'Sandstorm Legends', description: 'Multiplayer battle arena set in ancient desert ruins', type: 'game', thumbnail: '/multiplayer-desert-game.jpg', tags: ['Multiplayer', 'Action', 'Strategy'], likes: 428, releaseDate: '2024-08' },
-  { id: '6', title: 'The Last Caravan', description: 'Epic animated feature about a journey across the dunes', type: 'film', thumbnail: '/caravan-film.jpg', tags: ['Adventure', 'Epic', 'Feature Film'], likes: 567, releaseDate: '2024-06' },
-]
+function transformProject(project: ProjectListItem): DisplayProject {
+  return {
+    id: project.id,
+    slug: project.slug,
+    title: project.title,
+    description: project.shortDescription || '',
+    thumbnail: project.coverImageUrl ?? undefined,
+    tags: project.tags.map(t => t.name),
+    likes: project.likesCount || 0,
+    publishedAt: project.publishedAt || project.createdAt,
+    featured: project.featured,
+  }
+}
 
-const filters = [
-  { value: 'all', label: 'All Projects', icon: 'lucide:sparkles' },
-  { value: 'game', label: 'Games', icon: 'lucide:gamepad-2' },
-  { value: 'film', label: 'Films', icon: 'lucide:clapperboard' },
-  { value: 'animation', label: 'Animations', icon: 'lucide:play' },
-]
+const { getProjects } = useProjects()
 
-const projects = ref<Project[]>(mockProjects)
-const activeFilter = ref<string>('all')
+const projects = ref<DisplayProject[]>([])
+const selectedTag = ref<string>('all')
+const allTags = ref<string[]>([])
 const isLoading = ref(true)
+const error = ref<string | null>(null)
 const router = useRouter()
 
 onMounted(async () => {
   isLoading.value = true
-  await new Promise((r) => setTimeout(r, 400))
-  projects.value = mockProjects
-  isLoading.value = false
+  error.value = null
+
+  try {
+    const result = await getProjects()
+    projects.value = result.projects.map(transformProject)
+    
+    // Extract unique tags from projects
+    const tagSet = new Set<string>()
+    result.projects.forEach(p => p.tags.forEach(t => tagSet.add(t.name)))
+    allTags.value = Array.from(tagSet).sort()
+  } catch (e: any) {
+    console.error('Failed to fetch projects:', e)
+    error.value = e.message || 'Failed to load projects'
+  } finally {
+    isLoading.value = false
+  }
 })
 
-function setFilter(value: string) { activeFilter.value = value }
-function openProject(id: string) { router.push(`/projects/${id}`) }
-const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : projects.value.filter((p) => p.type === activeFilter.value))
+function setFilter(value: string) { selectedTag.value = value }
+function openProject(slug: string) { router.push(`/projects/${slug}`) }
+const filteredProjects = computed(() => {
+  if (selectedTag.value === 'all') return projects.value
+  return projects.value.filter((p) => p.tags.includes(selectedTag.value))
+})
 </script>
 
 <template>
@@ -63,14 +84,21 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
       <div :class="$style.filterContainer">
         <div :class="$style.filterList">
           <Button 
-            v-for="filter in filters" 
-            :key="filter.value" 
-            :variant="activeFilter === filter.value ? 'default' : 'outline'" 
-            :class="[$style.filterBtn, activeFilter === filter.value && $style.filterActive]"
-            @click="setFilter(filter.value)"
+            :variant="selectedTag === 'all' ? 'default' : 'outline'" 
+            :class="[$style.filterBtn, selectedTag === 'all' && $style.filterActive]"
+            @click="setFilter('all')"
           >
-            <Icon :name="filter.icon" :class="$style.filterIcon" />
-            {{ filter.label }}
+            <Icon name="lucide:sparkles" :class="$style.filterIcon" />
+            All Projects
+          </Button>
+          <Button 
+            v-for="tag in allTags" 
+            :key="tag" 
+            :variant="selectedTag === tag ? 'default' : 'outline'" 
+            :class="[$style.filterBtn, selectedTag === tag && $style.filterActive]"
+            @click="setFilter(tag)"
+          >
+            {{ tag }}
           </Button>
         </div>
       </div>
@@ -78,7 +106,18 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
 
     <section :class="$style.contentSection">
       <div :class="$style.contentContainer">
-        <div v-if="isLoading" :class="$style.loadingGrid">
+        <!-- Error State -->
+        <EmptyState
+          v-if="error"
+          icon="lucide:alert-circle"
+          title="Failed to Load Projects"
+          :description="error"
+          action-label="Try Again"
+          @action="() => $router.go(0)"
+        />
+
+        <!-- Loading State -->
+        <div v-else-if="isLoading" :class="$style.loadingGrid">
           <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
             <Skeleton variant="image" height="200px" />
             <div :class="$style.skeletonContent">
@@ -93,8 +132,8 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
         </div>
 
         <template v-else>
-          <div v-if="filteredProjects().length > 0" :class="$style.projectsGrid">
-            <div v-for="project in filteredProjects()" :key="project.id" :class="$style.projectCard" @click="openProject(project.id)">
+          <div v-if="filteredProjects.length > 0" :class="$style.projectsGrid">
+            <div v-for="project in filteredProjects" :key="project.id" :class="$style.projectCard" @click="openProject(project.slug)">
               <div :class="$style.projectImageWrapper">
                 <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" />
                 <div :class="$style.projectBadge">

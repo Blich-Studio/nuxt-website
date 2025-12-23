@@ -5,12 +5,14 @@ import Button from '../../components/ui/Button.vue'
 import Skeleton from '../../components/ui/Skeleton.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
+import type { ArticleListItem, Tag } from '~/types/api'
 
-interface Article {
+// Transform API article to display format
+interface DisplayArticle {
   id: string
+  slug: string
   title: string
   excerpt: string
-  content: string
   author: string
   authorAvatar?: string
   publishedAt: string
@@ -20,27 +22,50 @@ interface Article {
   likes: number
 }
 
-const mockArticles: Article[] = [
-  { id: '1', title: 'Building Worlds: Our Level Design Process', excerpt: 'How we craft immersive environments that tell stories without words, from initial concept to final polish', content: '...', author: 'Sarah Chen', authorAvatar: '/author-sarah.jpg', publishedAt: '2024-12-15', readTime: 8, thumbnail: '/blog-level-design.jpg', tags: ['Game Dev', 'Design', 'Tutorial'], likes: 234 },
-  { id: '2', title: 'Animation Principles for Indie Studios', excerpt: 'Essential techniques for creating fluid motion on a budget, including tips for small teams', content: '...', author: 'Marcus Liu', authorAvatar: '/author-marcus.jpg', publishedAt: '2024-12-10', readTime: 6, thumbnail: '/blog-animation-tips.jpg', tags: ['Animation', 'Tutorial', 'Workflow'], likes: 189 },
-  { id: '3', title: 'The Art of Desert Aesthetics', excerpt: 'Finding beauty in minimalism and warm color palettes inspired by natural landscapes', content: '...', author: 'Elena Rodriguez', authorAvatar: '/author-elena.jpg', publishedAt: '2024-12-05', readTime: 5, thumbnail: '/blog-desert-aesthetics.jpg', tags: ['Design', 'Art Direction', 'Inspiration'], likes: 312 },
-  { id: '4', title: 'Optimizing Game Performance on Mobile', excerpt: 'Practical strategies for maintaining smooth framerates without sacrificing visual quality', content: '...', author: 'Alex Kim', authorAvatar: '/author-alex.jpg', publishedAt: '2024-11-28', readTime: 10, thumbnail: '/blog-mobile-performance.jpg', tags: ['Game Dev', 'Technical', 'Mobile'], likes: 456 },
-  { id: '5', title: 'Behind the Scenes: Sunset Chronicles', excerpt: 'A deep dive into the production process of our latest animated short film', content: '...', author: 'Sarah Chen', authorAvatar: '/author-sarah.jpg', publishedAt: '2024-11-20', readTime: 12, thumbnail: '/blog-sunset-chronicles.jpg', tags: ['Animation', 'Behind the Scenes', 'Film'], likes: 567 },
-  { id: '6', title: 'Creating Memorable Sound Design', excerpt: 'How audio shapes player experience and emotional connection in games and animations', content: '...', author: 'Marcus Liu', authorAvatar: '/author-marcus.jpg', publishedAt: '2024-11-15', readTime: 7, thumbnail: '/blog-sound-design.jpg', tags: ['Audio', 'Game Dev', 'Tutorial'], likes: 278 },
-]
+function transformArticle(article: ArticleListItem): DisplayArticle {
+  return {
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    excerpt: article.perex,
+    author: article.author?.displayName || 'Unknown',
+    authorAvatar: article.author?.avatarUrl ?? undefined,
+    publishedAt: article.publishedAt || article.createdAt,
+    readTime: article.readTime || 5,
+    thumbnail: article.coverImageUrl ?? undefined,
+    tags: article.tags.map(t => t.name),
+    likes: article.likesCount || 0,
+  }
+}
 
-const allTags = Array.from(new Set(mockArticles.flatMap((a) => a.tags))).sort()
+const { getArticles, getTags, calculateReadTime } = useArticles()
 
-const articles = ref<Article[]>(mockArticles)
+const articles = ref<DisplayArticle[]>([])
+const allTags = ref<string[]>([])
 const selectedTags = ref<string[]>([])
 const isLoading = ref(true)
+const error = ref<string | null>(null)
 const router = useRouter()
 
 onMounted(async () => {
   isLoading.value = true
-  await new Promise((r) => setTimeout(r, 400))
-  articles.value = mockArticles
-  isLoading.value = false
+  error.value = null
+  
+  try {
+    // Fetch articles and tags in parallel
+    const [articlesResult, tagsResult] = await Promise.all([
+      getArticles(),
+      getTags(),
+    ])
+    
+    articles.value = articlesResult.articles.map(transformArticle)
+    allTags.value = tagsResult.map(t => t.name).sort()
+  } catch (e: any) {
+    console.error('Failed to fetch articles:', e)
+    error.value = e.message || 'Failed to load articles'
+  } finally {
+    isLoading.value = false
+  }
 })
 
 function toggleTag(tag: string) {
@@ -90,7 +115,18 @@ function openArticle(id: string) {
 
     <section :class="$style.contentSection">
       <div :class="$style.contentContainer">
-        <div v-if="isLoading" :class="$style.loadingGrid">
+        <!-- Error State -->
+        <EmptyState
+          v-if="error"
+          icon="lucide:alert-circle"
+          title="Failed to Load Articles"
+          :description="error"
+          action-label="Try Again"
+          @action="() => $router.go(0)"
+        />
+
+        <!-- Loading State -->
+        <div v-else-if="isLoading" :class="$style.loadingGrid">
           <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
             <Skeleton variant="image" height="200px" />
             <Skeleton variant="text" width="80%" height="1.5rem" :class="$style.skeletonTitle" />

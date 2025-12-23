@@ -158,10 +158,6 @@
   height: 1.25rem;
 }
 
-.linksSection {
-  // Default styling
-}
-
 .linksTitle {
   font-weight: 600;
   margin-bottom: 0.75rem;

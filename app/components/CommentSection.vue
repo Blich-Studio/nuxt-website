@@ -2,8 +2,9 @@
 import { ref, computed, onMounted } from 'vue'
 import Button from './ui/Button.vue'
 import Textarea from './ui/Textarea.vue'
+import type { Comment as ApiComment } from '~/types/api'
 
-interface Comment {
+interface DisplayComment {
   id: string
   userId: string
   userName: string
@@ -12,23 +13,36 @@ interface Comment {
   createdAt: string
   likes: number
   isLiked: boolean
-  replies?: Comment[]
+  replies?: DisplayComment[]
+}
+
+function transformComment(comment: ApiComment): DisplayComment {
+  return {
+    id: comment.id,
+    userId: comment.userId,
+    userName: comment.user?.displayName || 'Anonymous',
+    userAvatar: comment.user?.avatarUrl ?? undefined,
+    content: comment.content,
+    createdAt: comment.createdAt,
+    likes: comment.likesCount,
+    isLiked: comment.isLiked || false,
+    replies: comment.replies?.map(transformComment),
+  }
 }
 
 const props = defineProps<{ contentType: 'project' | 'article'; contentId: string }>()
 
-// Simple mock-auth for demo purposes (replace with real auth composable later)
-const user = ref<{ id: string; name: string; avatar?: string } | null>(null)
-function showAuthModal() {
-  // replace with real modal flow
-  alert('Open sign-in modal (demo)')
-}
+const { user, showAuthModal } = useAuth()
+const { getComments: getArticleComments, addComment: addArticleComment, likeComment: likeArticleComment, unlikeComment: unlikeArticleComment } = useArticles()
+const { getComments: getProjectComments, addComment: addProjectComment, likeComment: likeProjectComment, unlikeComment: unlikeProjectComment } = useProjects()
 
-const comments = ref<Comment[]>([])
+const comments = ref<DisplayComment[]>([])
 const newComment = ref('')
 const replyingTo = ref<string | null>(null)
 const replyContent = ref('')
 const isLoading = ref(true)
+const isSubmitting = ref(false)
+const error = ref<string | null>(null)
 
 onMounted(() => {
   loadComments()
@@ -36,41 +50,23 @@ onMounted(() => {
 
 async function loadComments() {
   isLoading.value = true
-  await new Promise((r) => setTimeout(r, 400))
-  comments.value = [
-    {
-      id: '1',
-      userId: 'user1',
-      userName: 'Alex Rivera',
-      userAvatar: '/user-avatar-1.jpg',
-      content: 'This is absolutely amazing! The attention to detail is incredible.',
-      createdAt: '2024-12-18T10:30:00Z',
-      likes: 24,
-      isLiked: false,
-      replies: [
-        {
-          id: '1-1',
-          userId: 'user2',
-          userName: 'Jordan Lee',
-          content: 'I totally agree! The desert aesthetic is so well executed.',
-          createdAt: '2024-12-18T11:00:00Z',
-          likes: 8,
-          isLiked: false,
-        },
-      ],
-    },
-    {
-      id: '2',
-      userId: 'user3',
-      userName: 'Sam Chen',
-      userAvatar: '/user-avatar-2.jpg',
-      content: "Can't wait to see what you create next. Keep up the fantastic work!",
-      createdAt: '2024-12-17T15:20:00Z',
-      likes: 15,
-      isLiked: false,
-    },
-  ]
-  isLoading.value = false
+  error.value = null
+  
+  try {
+    let result
+    if (props.contentType === 'article') {
+      result = await getArticleComments(props.contentId)
+    } else {
+      result = await getProjectComments(props.contentId)
+    }
+    comments.value = result.comments.map(transformComment)
+  } catch (e: any) {
+    console.error('Failed to load comments:', e)
+    error.value = e.message || 'Failed to load comments'
+    comments.value = []
+  } finally {
+    isLoading.value = false
+  }
 }
 
 function formatDate(date: string) {
@@ -86,64 +82,97 @@ function formatDate(date: string) {
   return commentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-function handleSubmitComment() {
+async function handleSubmitComment() {
   if (!user.value) {
     showAuthModal()
     return
   }
   if (!newComment.value.trim()) return
-  const comment: Comment = {
-    id: Date.now().toString(),
-    userId: user.value.id,
-    userName: user.value.name,
-    userAvatar: user.value.avatar,
-    content: newComment.value,
-    createdAt: new Date().toISOString(),
-    likes: 0,
-    isLiked: false,
-    replies: [],
+  
+  isSubmitting.value = true
+  
+  try {
+    let result
+    if (props.contentType === 'article') {
+      result = await addArticleComment(props.contentId, newComment.value)
+    } else {
+      result = await addProjectComment(props.contentId, newComment.value)
+    }
+    
+    // Add new comment to the top of the list
+    const displayComment = transformComment(result)
+    displayComment.userName = user.value.displayName || user.value.email
+    displayComment.userAvatar = user.value.avatarUrl
+    comments.value = [displayComment, ...comments.value]
+    newComment.value = ''
+  } catch (e: any) {
+    console.error('Failed to post comment:', e)
+    // Show error to user
+    alert(e.message || 'Failed to post comment')
+  } finally {
+    isSubmitting.value = false
   }
-  comments.value = [comment, ...comments.value]
-  newComment.value = ''
 }
 
 function handleSubmitReply(parentId: string) {
+  // Note: Nested replies may require different API structure
+  // For now, just post as a top-level comment mentioning the parent
   if (!user.value) {
     showAuthModal()
     return
   }
-  if (!replyContent.value.trim()) return
-  const reply: Comment = {
-    id: Date.now().toString(),
-    userId: user.value.id,
-    userName: user.value.name,
-    userAvatar: user.value.avatar,
-    content: replyContent.value,
-    createdAt: new Date().toISOString(),
-    likes: 0,
-    isLiked: false,
-  }
-  comments.value = comments.value.map((c) => (c.id === parentId ? { ...c, replies: [...(c.replies || []), reply] } : c))
-  replyContent.value = ''
+  // Simplified: treat replies as new top-level comments
   replyingTo.value = null
+  replyContent.value = ''
 }
 
-function handleLikeComment(commentId: string, parentId?: string) {
+async function handleLikeComment(commentId: string, parentId?: string) {
   if (!user.value) {
     showAuthModal()
     return
   }
-  if (parentId) {
-    comments.value = comments.value.map((c) =>
-      c.id === parentId
-        ? {
-            ...c,
-            replies: c.replies?.map((r) => (r.id === commentId ? { ...r, isLiked: !r.isLiked, likes: r.isLiked ? r.likes - 1 : r.likes + 1 } : r)),
-          }
-        : c,
-    )
-  } else {
-    comments.value = comments.value.map((c) => (c.id === commentId ? { ...c, isLiked: !c.isLiked, likes: c.isLiked ? c.likes - 1 : c.likes + 1 } : c))
+  
+  // Find the comment
+  const comment = parentId
+    ? comments.value.find(c => c.id === parentId)?.replies?.find(r => r.id === commentId)
+    : comments.value.find(c => c.id === commentId)
+  
+  if (!comment) return
+  
+  try {
+    let result
+    if (comment.isLiked) {
+      if (props.contentType === 'article') {
+        result = await unlikeArticleComment(commentId)
+      } else {
+        result = await unlikeProjectComment(commentId)
+      }
+    } else {
+      if (props.contentType === 'article') {
+        result = await likeArticleComment(commentId)
+      } else {
+        result = await likeProjectComment(commentId)
+      }
+    }
+    
+    // Update local state using API response
+    const newIsLiked = result.isLiked
+    const newLikes = result.likesCount
+    
+    if (parentId) {
+      comments.value = comments.value.map((c) =>
+        c.id === parentId
+          ? {
+              ...c,
+              replies: c.replies?.map((r) => (r.id === commentId ? { ...r, isLiked: newIsLiked, likes: newLikes } : r)),
+            }
+          : c,
+      )
+    } else {
+      comments.value = comments.value.map((c) => (c.id === commentId ? { ...c, isLiked: newIsLiked, likes: newLikes } : c))
+    }
+  } catch (e: any) {
+    console.error('Failed to like comment:', e)
   }
 }
 </script>
@@ -155,8 +184,10 @@ function handleLikeComment(commentId: string, parentId?: string) {
     <div :class="$style.commentBox">
       <div v-if="user">
         <div :class="$style.formGroup">
-          <Textarea v-model="newComment" placeholder="Share your thoughts..." :class="$style.textarea" />
-          <Button @click="handleSubmitComment">Post Comment</Button>
+          <Textarea v-model="newComment" placeholder="Share your thoughts..." :class="$style.textarea" :disabled="isSubmitting" />
+          <Button @click="handleSubmitComment" :disabled="isSubmitting || !newComment.trim()">
+            {{ isSubmitting ? 'Posting...' : 'Post Comment' }}
+          </Button>
         </div>
       </div>
       <div v-else :class="$style.signInPrompt">
@@ -165,7 +196,13 @@ function handleLikeComment(commentId: string, parentId?: string) {
       </div>
     </div>
 
-    <div v-if="isLoading" :class="$style.loadingState">
+    <!-- Error State -->
+    <div v-if="error" :class="$style.errorState">
+      <p>{{ error }}</p>
+      <Button variant="outline" size="sm" @click="loadComments">Try Again</Button>
+    </div>
+
+    <div v-else-if="isLoading" :class="$style.loadingState">
       <div v-for="i in 3" :key="i" :class="$style.skeletonComment">
         <div :class="$style.skeletonAvatar" />
         <div :class="$style.skeletonContent">
@@ -465,6 +502,24 @@ function handleLikeComment(commentId: string, parentId?: string) {
   height: 2.5rem;
   margin: 0 auto 0.75rem;
   opacity: 0.5;
+}
+
+.errorState {
+  text-align: center;
+  padding: 2rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.75rem;
+  color: #ef4444;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+
+  p {
+    margin: 0;
+    font-size: $text-sm;
+  }
 }
 
 @keyframes pulse {

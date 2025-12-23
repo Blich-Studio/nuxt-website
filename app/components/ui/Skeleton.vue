@@ -47,9 +47,9 @@ withDefaults(defineProps<Props>(), {
   :global([data-theme='dark']) & {
     background: linear-gradient(
       90deg,
-      oklch(0.25 0.01 80) 25%,
-      oklch(0.30 0.01 80) 50%,
-      oklch(0.25 0.01 80) 75%
+      oklch(0.18 0.005 280) 25%,
+      oklch(0.22 0.005 280) 50%,
+      oklch(0.18 0.005 280) 75%
     );
     background-size: 200% 100%;
   }

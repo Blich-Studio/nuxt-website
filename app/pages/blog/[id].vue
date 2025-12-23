@@ -6,9 +6,11 @@ import Badge from '~/components/ui/Badge.vue'
 import Skeleton from '~/components/ui/Skeleton.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
+import type { Article as ApiArticle } from '~/types/api'
 
-interface Article {
+interface DisplayArticle {
   id: string
+  slug: string
   title: string
   excerpt: string
   content: string
@@ -20,64 +22,80 @@ interface Article {
   thumbnail?: string
   tags: string[]
   likes: number
+  isLiked: boolean
 }
+
+function transformArticle(article: ApiArticle): DisplayArticle {
+  return {
+    id: article.id,
+    slug: article.slug,
+    title: article.title,
+    excerpt: article.perex,
+    content: article.content,
+    author: article.author?.displayName || 'Unknown',
+    authorBio: '', // Not available from API yet
+    authorAvatar: article.author?.avatarUrl ?? undefined,
+    publishedAt: article.publishedAt || article.createdAt,
+    readTime: article.readTime || Math.ceil(article.content.split(/\s+/).length / 200),
+    thumbnail: article.coverImageUrl ?? undefined,
+    tags: article.tags.map(t => t.name),
+    likes: article.likesCount || 0,
+    isLiked: article.isLiked || false,
+  }
+}
+
+const { getArticle, likeArticle, unlikeArticle } = useArticles()
 
 const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
 
-const article = ref<Article | null>(null)
+const article = ref<DisplayArticle | null>(null)
 const isLiked = ref(false)
 const likes = ref(0)
 const isLoading = ref(true)
+const error = ref<string | null>(null)
 
 onMounted(async () => {
   isLoading.value = true
-  await new Promise((r) => setTimeout(r, 500))
+  error.value = null
 
-  const mockArticle: Article = {
-    id,
-    title: 'Building Worlds: Our Level Design Process',
-    excerpt: 'How we craft immersive environments that tell stories without words',
-    content: `Level design is the backbone of any great game or interactive experience. It's where art meets functionality, where aesthetics blend with player psychology, and where stories unfold through environmental cues rather than exposition.
-
-## The Initial Concept
-
-Every level starts with a question: what experience do we want the player to have? For Desert Wanderer, we wanted players to feel both the vastness and the intimacy of the desert landscape. Wide open spaces would emphasize exploration and freedom, while carefully placed ruins and landmarks would provide moments of discovery and narrative depth.
-
-## Iteration and Playtesting
-
-The key to great level design is iteration. Our first pass is always rough - blocking out spaces, placing key landmarks, establishing flow. Then comes the most important part: playtesting. We watch players navigate the space, noting where they get confused, where they linger, where they rush through.
-
-## Environmental Storytelling
-
-The best stories don't need words. A weathered caravan, half-buried in sand. Ancient carvings on canyon walls. The remains of a campfire with personal belongings scattered nearby. Each element tells part of a larger story, inviting players to piece together what happened here.
-
-## Technical Considerations
-
-While creativity drives the vision, technical constraints shape the execution. We optimize sight lines to manage rendering loads, place landmarks strategically for navigation, and ensure performance targets are met without sacrificing visual quality.
-
-## The Final Polish
-
-The difference between good and great often comes down to polish. Adding particle effects to suggest wind and sand movement. Fine-tuning lighting to emphasize mood. Placing audio cues that enhance immersion. These finishing touches bring the world to life.`,
-    author: 'Sarah Chen',
-    authorBio: 'Lead Designer with 10 years of experience creating immersive game worlds',
-    authorAvatar: '/author-sarah.jpg',
-    publishedAt: '2024-12-15',
-    readTime: 8,
-    thumbnail: '/blog-level-design.jpg',
-    tags: ['Game Dev', 'Design', 'Tutorial'],
-    likes: 234,
+  try {
+    const result = await getArticle(id)
+    
+    if (result) {
+      article.value = transformArticle(result)
+      likes.value = article.value.likes
+      isLiked.value = article.value.isLiked
+    } else {
+      article.value = null
+    }
+  } catch (e: any) {
+    console.error('Failed to fetch article:', e)
+    error.value = e.message || 'Failed to load article'
+  } finally {
+    isLoading.value = false
   }
-
-  article.value = mockArticle
-  likes.value = mockArticle.likes
-  isLoading.value = false
 })
 
-function handleLike() {
-  isLiked.value = !isLiked.value
-  likes.value = isLiked.value ? likes.value + 1 : likes.value - 1
+async function handleLike() {
+  if (!article.value) return
+  
+  try {
+    if (isLiked.value) {
+      const result = await unlikeArticle(article.value.id)
+      isLiked.value = false
+      likes.value = result.likesCount
+    } else {
+      const result = await likeArticle(article.value.id)
+      isLiked.value = true
+      likes.value = result.likesCount
+    }
+  } catch (e: any) {
+    // If like fails (e.g., not logged in), show auth modal
+    const { showAuthModal } = useAuth()
+    showAuthModal()
+  }
 }
 
 function handleShare() {
