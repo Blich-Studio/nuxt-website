@@ -1,0 +1,23 @@
+{
+  "name": "blich-studio-website-nuxt",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "nuxt": "^4.2.2",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@nuxt/icon": "^2.1.1",
+    "sass": "^1.97.1",
+    "vitest": "^4.0.0"
+  }
+}
