@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
+import Skeleton from '~/components/ui/Skeleton.vue'
+import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
 
 interface Article {
@@ -107,9 +109,14 @@ function renderContent(content: string) {
     <template v-if="isLoading">
       <div :class="$style.loadingContainer">
         <div :class="$style.loadingInner">
-          <div :class="$style.skeletonHero" />
-          <div :class="$style.skeletonTitle" />
-          <div :class="$style.skeletonSubtitle" />
+          <Skeleton variant="image" height="24rem" :class="$style.skeletonHero" />
+          <Skeleton variant="text" width="80%" height="3rem" :class="$style.skeletonTitle" />
+          <div :class="$style.skeletonMeta">
+            <Skeleton variant="circular" width="48px" height="48px" />
+            <Skeleton variant="text" width="150px" height="1rem" />
+            <Skeleton variant="text" width="100px" height="1rem" />
+          </div>
+          <Skeleton variant="text" :lines="6" :class="$style.skeletonContent" />
         </div>
       </div>
     </template>
@@ -117,10 +124,13 @@ function renderContent(content: string) {
     <!-- Not Found State -->
     <template v-else-if="!article">
       <div :class="$style.notFound">
-        <div :class="$style.notFoundContent">
-          <h1 :class="$style.notFoundTitle">Article Not Found</h1>
-          <Button as="a" to="/blog">Back to Blog</Button>
-        </div>
+        <EmptyState
+          icon="lucide:file-x"
+          title="Article Not Found"
+          description="The article you're looking for doesn't exist or may have been removed."
+          action-label="Back to Blog"
+          action-to="/blog"
+        />
       </div>
     </template>
 
@@ -225,27 +235,22 @@ function renderContent(content: string) {
 }
 
 .skeletonHero {
-  height: 24rem;
-  background-color: var(--muted);
-  border-radius: 1rem;
   margin-bottom: 2rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .skeletonTitle {
-  height: 3rem;
-  background-color: var(--muted);
-  border-radius: 0.25rem;
-  margin-bottom: 1rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  margin-bottom: 1.5rem;
 }
 
-.skeletonSubtitle {
-  height: 1.5rem;
-  width: 66%;
-  background-color: var(--muted);
-  border-radius: 0.25rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.skeletonMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.skeletonContent {
+  margin-top: 1rem;
 }
 
 .notFound {
@@ -253,17 +258,6 @@ function renderContent(content: string) {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.notFoundContent {
-  text-align: center;
-}
-
-.notFoundTitle {
-  font-family: $font-display;
-  font-size: $text-4xl;
-  font-weight: 700;
-  margin-bottom: 1rem;
 }
 
 .heroSection {

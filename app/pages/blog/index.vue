@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import Badge from '../../components/ui/Badge.vue'
 import Button from '../../components/ui/Button.vue'
+import Skeleton from '../../components/ui/Skeleton.vue'
+import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
 
 interface Article {
@@ -89,10 +91,14 @@ function openArticle(id: string) {
     <section :class="$style.contentSection">
       <div :class="$style.contentContainer">
         <div v-if="isLoading" :class="$style.loadingGrid">
-          <div v-for="i in 6" :key="i" :class="$style.skeleton">
-            <div :class="$style.skeletonImage" />
-            <div :class="$style.skeletonTitle" />
-            <div :class="$style.skeletonText" />
+          <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
+            <Skeleton variant="image" height="200px" />
+            <Skeleton variant="text" width="80%" height="1.5rem" :class="$style.skeletonTitle" />
+            <Skeleton variant="text" :lines="2" />
+            <div :class="$style.skeletonMeta">
+              <Skeleton variant="rectangular" width="60px" height="20px" />
+              <Skeleton variant="rectangular" width="80px" height="20px" />
+            </div>
           </div>
         </div>
 
@@ -139,9 +145,14 @@ function openArticle(id: string) {
             </div>
           </div>
 
-          <div v-else :class="$style.emptyState">
-            <p :class="$style.emptyText">No articles found with selected tags</p>
-            <Button @click="clearFilters" variant="outline">Clear Filters</Button>
+          <div v-else :class="$style.emptyStateWrapper">
+            <EmptyState
+              icon="lucide:search-x"
+              title="No articles found"
+              description="No articles match your selected tags. Try adjusting your filters."
+              action-label="Clear Filters"
+              @action="clearFilters"
+            />
           </div>
         </template>
       </div>
@@ -273,32 +284,24 @@ function openArticle(id: string) {
   }
 }
 
-.skeleton {
+.skeletonCard {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-}
-
-.skeletonImage {
-  aspect-ratio: 16 / 9;
-  background-color: var(--muted);
-  border-radius: 0.75rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  gap: 0.75rem;
 }
 
 .skeletonTitle {
-  height: 1.5rem;
-  background-color: var(--muted);
-  border-radius: 0.25rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  margin-top: 0.5rem;
 }
 
-.skeletonText {
-  height: 1rem;
-  width: 66%;
-  background-color: var(--muted);
-  border-radius: 0.25rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.skeletonMeta {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.emptyStateWrapper {
+  grid-column: 1 / -1;
 }
 
 .featuredCard {
@@ -503,25 +506,5 @@ function openArticle(id: string) {
   justify-content: space-between;
   font-size: $text-xs;
   color: $color-muted-foreground;
-}
-
-.emptyState {
-  text-align: center;
-  padding: 5rem 0;
-}
-
-.emptyText {
-  font-size: $text-xl;
-  color: $color-muted-foreground;
-  margin-bottom: 1rem;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 </style>

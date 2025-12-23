@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
+import Skeleton from '../../components/ui/Skeleton.vue'
+import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
 
 interface Project {
@@ -77,34 +79,51 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
     <section :class="$style.contentSection">
       <div :class="$style.contentContainer">
         <div v-if="isLoading" :class="$style.loadingGrid">
-          <div v-for="i in 6" :key="i" :class="$style.skeleton" />
-        </div>
-
-        <div v-else :class="$style.projectsGrid">
-          <div v-for="project in filteredProjects()" :key="project.id" :class="$style.projectCard" @click="openProject(project.id)">
-            <div :class="$style.projectImageWrapper">
-              <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" />
-              <div :class="$style.projectBadge">
-                <Badge :class="$style.typeBadge">{{ project.type }}</Badge>
-              </div>
-            </div>
-            <div :class="$style.projectContent">
-              <h3 :class="$style.projectTitle">{{ project.title }}</h3>
-              <p :class="$style.projectDescription">{{ project.description }}</p>
-              <div :class="$style.projectTags">
-                <Badge v-for="tag in project.tags.slice(0,3)" :key="tag" variant="secondary" :class="$style.tagSmall">{{ tag }}</Badge>
-              </div>
-              <div :class="$style.projectMeta">
-                <span>{{ project.likes }} likes</span>
-                <span>{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) }}</span>
+          <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
+            <Skeleton variant="image" height="200px" />
+            <div :class="$style.skeletonContent">
+              <Skeleton variant="text" width="70%" height="1.25rem" />
+              <Skeleton variant="text" :lines="2" />
+              <div :class="$style.skeletonTags">
+                <Skeleton variant="rectangular" width="60px" height="20px" />
+                <Skeleton variant="rectangular" width="80px" height="20px" />
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="!isLoading && filteredProjects().length === 0" :class="$style.emptyState">
-          <p :class="$style.emptyText">No projects found in this category</p>
-        </div>
+        <template v-else>
+          <div v-if="filteredProjects().length > 0" :class="$style.projectsGrid">
+            <div v-for="project in filteredProjects()" :key="project.id" :class="$style.projectCard" @click="openProject(project.id)">
+              <div :class="$style.projectImageWrapper">
+                <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" />
+                <div :class="$style.projectBadge">
+                  <Badge :class="$style.typeBadge">{{ project.type }}</Badge>
+                </div>
+              </div>
+              <div :class="$style.projectContent">
+                <h3 :class="$style.projectTitle">{{ project.title }}</h3>
+                <p :class="$style.projectDescription">{{ project.description }}</p>
+                <div :class="$style.projectTags">
+                  <Badge v-for="tag in project.tags.slice(0,3)" :key="tag" variant="secondary" :class="$style.tagSmall">{{ tag }}</Badge>
+                </div>
+                <div :class="$style.projectMeta">
+                  <span>{{ project.likes }} likes</span>
+                  <span>{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <EmptyState
+            v-else
+            icon="lucide:folder-search"
+            title="No projects found"
+            description="No projects match the selected category. Try a different filter."
+            action-label="Show All Projects"
+            @action="setFilter('all')"
+          />
+        </template>
       </div>
     </section>
   </div>
@@ -220,11 +239,24 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
   }
 }
 
-.skeleton {
-  aspect-ratio: 16 / 9;
-  background-color: var(--muted);
+.skeletonCard {
   border-radius: 0.75rem;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  overflow: hidden;
+  background-color: $color-card;
+  border: 1px solid $color-border;
+}
+
+.skeletonContent {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeletonTags {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .projectsGrid {
@@ -330,24 +362,5 @@ const filteredProjects = () => (activeFilter.value === 'all' ? projects.value : 
   justify-content: space-between;
   font-size: $text-sm;
   color: $color-muted-foreground;
-}
-
-.emptyState {
-  text-align: center;
-  padding: 5rem 0;
-}
-
-.emptyText {
-  font-size: $text-xl;
-  color: $color-muted-foreground;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
 }
 </style>

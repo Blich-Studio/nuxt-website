@@ -38,9 +38,11 @@ $text-6xl: 3.75rem;   // 60px
 $text-7xl: 4.5rem;    // 72px
 
 // ============================
-// Spacing
+// Spacing & Radius
 // ============================
+$radius-sm: 0.25rem;
 $radius-md: var(--radius);
+$radius-lg: 0.75rem;
 
 // ============================
 // Breakpoints
