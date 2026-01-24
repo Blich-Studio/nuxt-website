@@ -6,6 +6,25 @@ export interface AuthUser {
   name?: string
 }
 
+export interface RegisterPayload {
+  email: string
+  password: string
+  nickname: string
+  firstName?: string
+  lastName?: string
+}
+
+export interface RegisteredUser {
+  id: string
+  email: string
+  nickname: string
+  firstName?: string | null
+  lastName?: string | null
+  isVerified: boolean
+  role: string
+  createdAt: string
+}
+
 export function useAuth() {
   // SSR-safe shared state using useState
   const user = useState<AuthUser | null>('auth-user', () => null)
@@ -113,6 +132,24 @@ export function useAuth() {
   }
 
   /**
+   * Register a new user (does not sign in)
+   */
+  async function register(payload: RegisterPayload): Promise<RegisteredUser> {
+    loading.value = true
+
+    try {
+      return await $fetch<RegisteredUser>('/api/_proxy/auth/register', {
+        method: 'POST',
+        body: payload,
+        credentials: 'include',
+      })
+    } finally {
+      loading.value = false
+      initialized.value = true
+    }
+  }
+
+  /**
    * Show authentication modal
    */
   function showAuthModal() {
@@ -132,6 +169,7 @@ export function useAuth() {
     isAuthenticated,
     fetchUser,
     signIn,
+    register,
     signOut,
     showAuthModal,
   }

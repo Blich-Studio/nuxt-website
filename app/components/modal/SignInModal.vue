@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 
 // Composables are auto-imported in Nuxt
-const { signIn } = useAuth()
+const { signIn, register } = useAuth()
 const { show, close } = useAuthModal()
 
 const mode = ref<'signin' | 'signup'>('signin')
@@ -11,10 +11,12 @@ const email = ref('')
 const password = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
+const success = ref<string | null>(null)
 
 function toggleMode() {
   mode.value = mode.value === 'signin' ? 'signup' : 'signin'
   error.value = null
+  success.value = null
 }
 
 async function submit() {
@@ -26,11 +28,26 @@ async function submit() {
     error.value = 'Please enter your email.'
     return
   }
+  if (mode.value === 'signup' && !password.value.trim()) {
+    error.value = 'Please enter a password.'
+    return
+  }
   loading.value = true
   error.value = null
+  success.value = null
   try {
-    await signIn({ email: email.value.trim(), password: password.value })
-    close()
+    if (mode.value === 'signup') {
+      await register({
+        email: email.value.trim(),
+        password: password.value,
+        nickname: name.value.trim(),
+      })
+      success.value = 'Account created. Check your email to verify, then sign in.'
+      mode.value = 'signin'
+    } else {
+      await signIn({ email: email.value.trim(), password: password.value })
+      close()
+    }
   } catch (e: any) {
     error.value = e?.message ?? 'Authentication failed'
   } finally {
@@ -63,6 +80,7 @@ async function submit() {
         </div>
 
         <div v-if="error" class="error">{{ error }}</div>
+        <div v-if="success" class="success">{{ success }}</div>
 
         <button type="submit" class="submit-btn" :disabled="loading">
           {{ loading ? 'Loading...' : (mode === 'signin' ? 'Sign In' : 'Sign Up') }}
@@ -167,6 +185,11 @@ async function submit() {
 
 .error {
   color: var(--destructive);
+  font-size: 0.875rem;
+}
+
+.success {
+  color: var(--clay-orange);
   font-size: 0.875rem;
 }
 
