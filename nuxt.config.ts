@@ -33,9 +33,11 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    // Server-side only (used by proxy)
+    apiUrl: process.env.NUXT_API_URL || process.env.NUXT_PUBLIC_API_URL || '',
     public: {
-      // Set this in your environment: API_URL
-      apiUrl: process.env.API_URL || ''
+      // Client-side accessible
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || ''
     }
   }
 })

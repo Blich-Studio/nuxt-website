@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
 import Skeleton from '~/components/ui/Skeleton.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
@@ -12,12 +11,14 @@ interface DisplayProject {
   id: string
   slug: string
   title: string
+  type: string
   description: string
   thumbnail?: string
   galleryUrls: string[]
-  videoUrl?: string
-  externalUrl?: string
   githubUrl?: string
+  itchioUrl?: string
+  steamUrl?: string
+  youtubeUrl?: string
   tags: string[]
   likes: number
   isLiked: boolean
@@ -25,17 +26,28 @@ interface DisplayProject {
   featured: boolean
 }
 
+const typeLabels: Record<string, string> = {
+  game: 'Game',
+  engine: 'Engine',
+  tool: 'Tool',
+  animation: 'Animation',
+  artwork: 'Artwork',
+  other: 'Project',
+}
+
 function transformProject(project: ApiProject): DisplayProject {
   return {
     id: project.id,
     slug: project.slug,
     title: project.title,
+    type: project.type,
     description: project.description,
     thumbnail: project.coverImageUrl ?? undefined,
     galleryUrls: project.galleryUrls || [],
-    videoUrl: project.videoUrl ?? undefined,
-    externalUrl: project.externalUrl ?? undefined,
     githubUrl: project.githubUrl ?? undefined,
+    itchioUrl: project.itchioUrl ?? undefined,
+    steamUrl: project.steamUrl ?? undefined,
+    youtubeUrl: project.youtubeUrl ?? undefined,
     tags: project.tags.map(t => t.name),
     likes: project.likesCount || 0,
     isLiked: project.isLiked || false,
@@ -45,6 +57,7 @@ function transformProject(project: ApiProject): DisplayProject {
 }
 
 const { getProject, likeProject, unlikeProject } = useProjects()
+const { user, showAuthModal, initialized, fetchUser } = useAuth()
 
 const route = useRoute()
 const id = (route.params.id as string) || '1'
@@ -54,6 +67,7 @@ const isLoading = ref(true)
 const error = ref<string | null>(null)
 const isLiked = ref(false)
 const likes = ref(0)
+const isLiking = ref(false)
 
 onMounted(async () => {
   isLoading.value = true
@@ -79,7 +93,22 @@ onMounted(async () => {
 
 async function handleLike() {
   if (!project.value) return
-  
+
+  // Ensure auth is initialized
+  if (!initialized.value) {
+    await fetchUser(true)
+  }
+
+  // Check if user is logged in
+  if (!user.value?.userId) {
+    showAuthModal()
+    return
+  }
+
+  // Prevent double-clicks
+  if (isLiking.value) return
+  isLiking.value = true
+
   try {
     if (isLiked.value) {
       const result = await unlikeProject(project.value.id)
@@ -91,9 +120,13 @@ async function handleLike() {
       likes.value = result.likesCount
     }
   } catch (e: any) {
-    // If like fails (e.g., not logged in), show auth modal
-    const { showAuthModal } = useAuth()
-    showAuthModal()
+    console.error('Failed to like project:', e)
+    // If 401, show auth modal
+    if (e?.statusCode === 401 || e?.response?.status === 401) {
+      showAuthModal()
+    }
+  } finally {
+    isLiking.value = false
   }
 }
 </script>
@@ -141,14 +174,34 @@ async function handleLike() {
       <!-- Project Content -->
       <template v-else-if="project">
         <div :class="$style.projectSection">
+          <div :class="$style.typeLabel">{{ typeLabels[project.type] || 'Project' }}</div>
           <h1 :class="$style.title">{{ project.title }}</h1>
-          <div :class="$style.meta">{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ likes }} likes</div>
+          <div :class="$style.meta">{{ new Date(project.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ likes }} likes</div>
+
+          <!-- Project Links -->
+          <div v-if="project.githubUrl || project.itchioUrl || project.steamUrl || project.youtubeUrl" :class="$style.linksSection">
+            <a v-if="project.githubUrl" :href="project.githubUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="View on GitHub">
+              <Icon name="simple-icons:github" :class="$style.linkIcon" />
+              <span>GitHub</span>
+            </a>
+            <a v-if="project.itchioUrl" :href="project.itchioUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="View on itch.io">
+              <Icon name="simple-icons:itchdotio" :class="$style.linkIcon" />
+              <span>itch.io</span>
+            </a>
+            <a v-if="project.steamUrl" :href="project.steamUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="View on Steam">
+              <Icon name="simple-icons:steam" :class="$style.linkIcon" />
+              <span>Steam</span>
+            </a>
+            <a v-if="project.youtubeUrl" :href="project.youtubeUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="Watch on YouTube">
+              <Icon name="simple-icons:youtube" :class="$style.linkIcon" />
+              <span>YouTube</span>
+            </a>
+          </div>
           <div :class="$style.imageWrapper">
-            <img :src="project.thumbnail" :alt="project.title" :class="$style.image" />
+            <img :src="project.thumbnail || '/placeholder.jpg'" :alt="project.title" :class="$style.image" />
           </div>
           <div :class="$style.prose">
             <p>{{ project.description }}</p>
-            <p>{{ project.content }}</p>
           </div>
 
           <div :class="$style.tagsSection">
@@ -158,7 +211,7 @@ async function handleLike() {
           </div>
         </div>
 
-        <CommentSection content-type="project" :content-id="id" />
+        <CommentSection content-type="project" :content-id="project.id" />
       </template>
     </div>
   </div>
@@ -203,6 +256,16 @@ async function handleLike() {
   margin-bottom: 2rem;
 }
 
+.typeLabel {
+  display: inline-block;
+  font-size: $text-xs;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $color-primary;
+  margin-bottom: 0.5rem;
+}
+
 .title {
   font-family: $font-display;
   font-size: $text-4xl;
@@ -244,5 +307,39 @@ async function handleLike() {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+.linksSection {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.linkButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: $color-card;
+  color: $color-foreground;
+  border: 1px solid $color-border;
+  border-radius: 0.5rem;
+  font-size: $text-sm;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.1s ease, border-color 0.2s ease;
+
+  &:hover {
+    background: $color-primary;
+    color: $color-primary-foreground;
+    border-color: $color-primary;
+    transform: translateY(-1px);
+  }
+}
+
+.linkIcon {
+  width: 1.25rem;
+  height: 1.25rem;
 }
 </style>

@@ -125,17 +125,21 @@ export interface LikeStatus {
 }
 
 // Project types
+export type ProjectType = 'game' | 'engine' | 'tool' | 'animation' | 'artwork' | 'other'
+
 export interface Project {
   id: string
   title: string
   slug: string
+  type: ProjectType
   description: string
   shortDescription: string | null
   coverImageUrl: string | null
   galleryUrls: string[]
-  videoUrl: string | null
-  externalUrl: string | null
   githubUrl: string | null
+  itchioUrl: string | null
+  steamUrl: string | null
+  youtubeUrl: string | null
   author: Author
   status: 'draft' | 'published' | 'archived'
   featured: boolean
@@ -153,6 +157,7 @@ export interface ProjectListItem extends Omit<Project, 'description'> {}
 
 export interface ProjectFilters {
   status?: 'draft' | 'published' | 'archived'
+  type?: ProjectType
   featured?: boolean
   tags?: string
   search?: string

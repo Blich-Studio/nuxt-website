@@ -32,7 +32,7 @@ function transformComment(comment: ApiComment): DisplayComment {
 
 const props = defineProps<{ contentType: 'project' | 'article'; contentId: string }>()
 
-const { user, showAuthModal } = useAuth()
+const { user, showAuthModal, initialized, fetchUser } = useAuth()
 const { getComments: getArticleComments, addComment: addArticleComment, likeComment: likeArticleComment, unlikeComment: unlikeArticleComment } = useArticles()
 const { getComments: getProjectComments, addComment: addProjectComment, likeComment: likeProjectComment, unlikeComment: unlikeProjectComment } = useProjects()
 
@@ -42,6 +42,7 @@ const replyingTo = ref<string | null>(null)
 const replyContent = ref('')
 const isLoading = ref(true)
 const isSubmitting = ref(false)
+const likingCommentId = ref<string | null>(null)
 const error = ref<string | null>(null)
 
 onMounted(() => {
@@ -83,14 +84,19 @@ function formatDate(date: string) {
 }
 
 async function handleSubmitComment() {
-  if (!user.value) {
+  // Ensure auth is initialized
+  if (!initialized.value) {
+    await fetchUser(true)
+  }
+
+  if (!user.value?.userId) {
     showAuthModal()
     return
   }
   if (!newComment.value.trim()) return
-  
+
   isSubmitting.value = true
-  
+
   try {
     let result
     if (props.contentType === 'article') {
@@ -98,11 +104,10 @@ async function handleSubmitComment() {
     } else {
       result = await addProjectComment(props.contentId, newComment.value)
     }
-    
+
     // Add new comment to the top of the list
     const displayComment = transformComment(result)
-    displayComment.userName = user.value.displayName || user.value.email
-    displayComment.userAvatar = user.value.avatarUrl
+    displayComment.userName = user.value.name || user.value.email
     comments.value = [displayComment, ...comments.value]
     newComment.value = ''
   } catch (e: any) {
@@ -114,31 +119,71 @@ async function handleSubmitComment() {
   }
 }
 
-function handleSubmitReply(parentId: string) {
-  // Note: Nested replies may require different API structure
-  // For now, just post as a top-level comment mentioning the parent
-  if (!user.value) {
+async function handleSubmitReply(parentId: string) {
+  // Ensure auth is initialized
+  if (!initialized.value) {
+    await fetchUser(true)
+  }
+
+  if (!user.value?.userId) {
     showAuthModal()
     return
   }
-  // Simplified: treat replies as new top-level comments
-  replyingTo.value = null
-  replyContent.value = ''
+  if (!replyContent.value.trim()) return
+
+  isSubmitting.value = true
+
+  try {
+    let result
+    if (props.contentType === 'article') {
+      result = await addArticleComment(props.contentId, replyContent.value, parentId)
+    } else {
+      result = await addProjectComment(props.contentId, replyContent.value, parentId)
+    }
+
+    // Add reply to the parent comment
+    const displayReply = transformComment(result)
+    displayReply.userName = user.value.name || user.value.email
+
+    comments.value = comments.value.map((c) =>
+      c.id === parentId
+        ? { ...c, replies: [...(c.replies || []), displayReply] }
+        : c
+    )
+
+    replyingTo.value = null
+    replyContent.value = ''
+  } catch (e: any) {
+    console.error('Failed to post reply:', e)
+    alert(e.message || 'Failed to post reply')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 async function handleLikeComment(commentId: string, parentId?: string) {
-  if (!user.value) {
+  // Ensure auth is initialized
+  if (!initialized.value) {
+    await fetchUser(true)
+  }
+
+  if (!user.value?.userId) {
     showAuthModal()
     return
   }
-  
+
+  // Prevent double-clicks
+  if (likingCommentId.value === commentId) return
+
   // Find the comment
   const comment = parentId
     ? comments.value.find(c => c.id === parentId)?.replies?.find(r => r.id === commentId)
     : comments.value.find(c => c.id === commentId)
-  
+
   if (!comment) return
-  
+
+  likingCommentId.value = commentId
+
   try {
     let result
     if (comment.isLiked) {
@@ -154,11 +199,11 @@ async function handleLikeComment(commentId: string, parentId?: string) {
         result = await likeProjectComment(commentId)
       }
     }
-    
+
     // Update local state using API response
     const newIsLiked = result.isLiked
     const newLikes = result.likesCount
-    
+
     if (parentId) {
       comments.value = comments.value.map((c) =>
         c.id === parentId
@@ -173,6 +218,8 @@ async function handleLikeComment(commentId: string, parentId?: string) {
     }
   } catch (e: any) {
     console.error('Failed to like comment:', e)
+  } finally {
+    likingCommentId.value = null
   }
 }
 </script>
@@ -182,7 +229,7 @@ async function handleLikeComment(commentId: string, parentId?: string) {
     <h2 :class="$style.title">Comments ({{ comments.length }})</h2>
 
     <div :class="$style.commentBox">
-      <div v-if="user">
+      <div v-if="user?.userId">
         <div :class="$style.formGroup">
           <Textarea v-model="newComment" placeholder="Share your thoughts..." :class="$style.textarea" :disabled="isSubmitting" />
           <Button @click="handleSubmitComment" :disabled="isSubmitting || !newComment.trim()">
@@ -228,8 +275,8 @@ async function handleLikeComment(commentId: string, parentId?: string) {
                 </div>
                 <p :class="$style.commentText">{{ comment.content }}</p>
                 <div :class="$style.actions">
-                  <button @click="handleLikeComment(comment.id)" :class="$style.actionButton">
-                    <Icon name="lucide:heart" :class="$style.actionIcon" /> <span>{{ comment.likes }}</span>
+                  <button @click="handleLikeComment(comment.id)" :disabled="likingCommentId === comment.id" :class="[$style.actionButton, comment.isLiked && $style.liked]">
+                    <Icon name="lucide:heart" :class="[$style.actionIcon, comment.isLiked && $style.likedIcon]" /> <span>{{ comment.likes }}</span>
                   </button>
                   <button @click="replyingTo = comment.id" :class="$style.actionButton">
                     <Icon name="lucide:message-circle" :class="$style.actionIcon" /> Reply
@@ -259,8 +306,8 @@ async function handleLikeComment(commentId: string, parentId?: string) {
                           </div>
                           <p :class="$style.commentText">{{ reply.content }}</p>
                           <div :class="$style.actions">
-                            <button @click="handleLikeComment(reply.id, comment.id)" :class="$style.actionButton">
-                              <Icon name="lucide:heart" :class="$style.actionIcon" /> <span>{{ reply.likes }}</span>
+                            <button @click="handleLikeComment(reply.id, comment.id)" :disabled="likingCommentId === reply.id" :class="[$style.actionButton, reply.isLiked && $style.liked]">
+                              <Icon name="lucide:heart" :class="[$style.actionIcon, reply.isLiked && $style.likedIcon]" /> <span>{{ reply.likes }}</span>
                             </button>
                           </div>
                         </div>
@@ -463,6 +510,15 @@ async function handleLikeComment(commentId: string, parentId?: string) {
 .actionIcon {
   width: 0.875rem;
   height: 0.875rem;
+}
+
+.liked {
+  color: #ef4444;
+}
+
+.likedIcon {
+  fill: #ef4444;
+  color: #ef4444;
 }
 
 .replyForm {

@@ -1,10 +1,18 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import type { ProjectListItem, ArticleListItem } from '~/types/api'
+
+const { getFeaturedProjects } = useProjects()
+const { getArticles } = useArticles()
 
 const scrollY = ref(0)
 const mousePosition = ref({ x: 0, y: 0 })
+const featuredProjects = ref<ProjectListItem[]>([])
+const featuredArticles = ref<ArticleListItem[]>([])
+const isLoadingProjects = ref(true)
+const isLoadingArticles = ref(true)
 
-onMounted(() => {
+onMounted(async () => {
   const handleScroll = () => (scrollY.value = window.scrollY)
   const handleMouseMove = (e: MouseEvent) => (mousePosition.value = { x: e.clientX, y: e.clientY })
 
@@ -15,6 +23,26 @@ onMounted(() => {
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('mousemove', handleMouseMove)
   })
+
+  // Fetch featured projects and articles in parallel
+  const [projectsResult, articlesResult] = await Promise.allSettled([
+    getFeaturedProjects(4),
+    getArticles(undefined, { limit: 3 }),
+  ])
+
+  if (projectsResult.status === 'fulfilled') {
+    featuredProjects.value = projectsResult.value
+  } else {
+    console.error('Failed to fetch featured projects:', projectsResult.reason)
+  }
+  isLoadingProjects.value = false
+
+  if (articlesResult.status === 'fulfilled') {
+    featuredArticles.value = articlesResult.value.articles
+  } else {
+    console.error('Failed to fetch featured articles:', articlesResult.reason)
+  }
+  isLoadingArticles.value = false
 })
 
 const logoScale = computed(() => Math.max(0.3, 1 - scrollY.value * 0.002))
@@ -27,11 +55,31 @@ const steps = [
   { num: '03', title: 'Polish', desc: 'Adding the digital magic that makes it pop' },
 ]
 
-const posts = [
-  { tag: 'TUTORIAL', title: 'Stop Motion Basics for Game Devs', time: '8 min read' },
-  { tag: 'PROCESS', title: 'Building a Character from Scratch', time: '12 min read' },
-  { tag: 'INSIGHTS', title: 'Why Handmade Still Matters', time: '5 min read' },
-]
+// Type labels for project types
+const typeLabels: Record<string, string> = {
+  game: 'GAME',
+  engine: 'ENGINE',
+  tool: 'TOOL',
+  animation: 'ANIMATION',
+  artwork: 'ARTWORK',
+  other: 'PROJECT',
+}
+
+// Helper to get type display name
+function getProjectTag(project: ProjectListItem): string {
+  return typeLabels[project.type] || 'PROJECT'
+}
+
+// Helper to get tag display name from article
+function getArticleTag(article: ArticleListItem): string {
+  return article.tags?.[0]?.name?.toUpperCase() || 'ARTICLE'
+}
+
+// Helper to format read time
+function getReadTime(article: ArticleListItem): string {
+  const minutes = article.readTime || 5
+  return `${minutes} min read`
+}
 </script>
 
 <template>
@@ -115,42 +163,47 @@ const posts = [
           </NuxtLink>
         </div>
 
-        <div class="projects-grid">
-          <NuxtLink to="/projects" class="project-card project-card-large">
-            <img src="/pixel-game-desert.jpg" alt="Stop motion game" class="project-image" />
-            <div class="project-overlay" />
-            <div class="project-content">
-              <div class="project-tag tag-orange">STOP MOTION GAME</div>
-              <h3 class="project-title-lg">Claybound Adventures</h3>
-              <p class="project-desc">A tactile platformer where every frame is handcrafted clay</p>
-            </div>
-          </NuxtLink>
+        <!-- Loading state -->
+        <div v-if="isLoadingProjects" class="projects-grid">
+          <div v-for="i in 4" :key="i" class="project-card project-skeleton" :class="{ 'project-card-large': i === 1 || i === 4 }">
+            <div class="skeleton-image" />
+          </div>
+        </div>
 
-          <NuxtLink to="/projects" class="project-card">
-            <img src="/abstract-desert-animation.jpg" alt="Animation" class="project-image" />
-            <div class="project-overlay" />
-            <div class="project-content project-content-sm">
-              <div class="project-tag tag-beige">SHORT FILM</div>
-              <h3 class="project-title">The Last Frame</h3>
-            </div>
+        <!-- Empty state -->
+        <div v-else-if="featuredProjects.length === 0" class="featured-empty">
+          <Icon name="lucide:image" class="empty-icon" />
+          <p>No featured projects yet. Check back soon!</p>
+          <NuxtLink to="/projects" class="btn btn-outline-orange">
+            Browse All Projects
           </NuxtLink>
+        </div>
 
-          <NuxtLink to="/projects" class="project-card">
-            <img src="/multiplayer-desert-game.jpg" alt="Game project" class="project-image" />
+        <!-- Dynamic projects grid -->
+        <div v-else class="projects-grid">
+          <NuxtLink
+            v-for="(project, index) in featuredProjects"
+            :key="project.id"
+            :to="`/projects/${project.slug}`"
+            class="project-card"
+            :class="{ 'project-card-large': index === 0 || index === 3 }"
+          >
+            <img
+              :src="project.coverImageUrl || '/placeholder.svg'"
+              :alt="project.title"
+              class="project-image"
+            />
             <div class="project-overlay" />
-            <div class="project-content project-content-sm">
-              <div class="project-tag tag-rust">EXPERIMENTAL</div>
-              <h3 class="project-title">Frame by Frame</h3>
-            </div>
-          </NuxtLink>
-
-          <NuxtLink to="/projects" class="project-card project-card-large">
-            <img src="/caravan-film.jpg" alt="Film project" class="project-image" />
-            <div class="project-overlay" />
-            <div class="project-content">
-              <div class="project-tag tag-grain">ANIMATED FILM</div>
-              <h3 class="project-title-lg">Desert Chronicles</h3>
-              <p class="project-desc">15 minutes • 12,000+ frames of handmade animation</p>
+            <div class="project-content" :class="{ 'project-content-sm': index !== 0 && index !== 3 }">
+              <div class="project-tag" :class="['tag-orange', 'tag-beige', 'tag-rust', 'tag-grain'][index % 4]">
+                {{ getProjectTag(project) }}
+              </div>
+              <h3 :class="index === 0 || index === 3 ? 'project-title-lg' : 'project-title'">
+                {{ project.title }}
+              </h3>
+              <p v-if="(index === 0 || index === 3) && project.shortDescription" class="project-desc">
+                {{ project.shortDescription }}
+              </p>
             </div>
           </NuxtLink>
         </div>
@@ -188,13 +241,29 @@ const posts = [
           <p class="section-subtitle">Thoughts, tutorials, and behind-the-scenes chaos</p>
         </div>
 
-        <div class="blog-grid">
-          <NuxtLink v-for="post in posts" :key="post.title" to="/blog" class="blog-card">
+        <!-- Loading state -->
+        <div v-if="isLoadingArticles" class="blog-grid">
+          <div v-for="i in 3" :key="i" class="blog-card blog-skeleton">
+            <div class="skeleton-tag" />
+            <div class="skeleton-title" />
+            <div class="skeleton-title skeleton-title-short" />
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="featuredArticles.length === 0" class="blog-empty">
+          <Icon name="lucide:file-text" class="empty-icon" />
+          <p>No articles yet. Check back soon!</p>
+        </div>
+
+        <!-- Dynamic articles grid -->
+        <div v-else class="blog-grid">
+          <NuxtLink v-for="article in featuredArticles" :key="article.id" :to="`/blog/${article.slug}`" class="blog-card">
             <div class="blog-card-header">
-              <span class="blog-tag">{{ post.tag }}</span>
-              <span class="blog-time">{{ post.time }}</span>
+              <span class="blog-tag">{{ getArticleTag(article) }}</span>
+              <span class="blog-time">{{ getReadTime(article) }}</span>
             </div>
-            <h3 class="blog-title">{{ post.title }}</h3>
+            <h3 class="blog-title">{{ article.title }}</h3>
             <Icon name="lucide:arrow-right" class="blog-arrow" />
           </NuxtLink>
         </div>
@@ -230,6 +299,9 @@ const posts = [
 .blob {
   position: absolute;
   transition: transform 0.1s ease-out;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .blob-rust {
@@ -282,6 +354,9 @@ const posts = [
   background-color: oklch(0.68 0.14 45 / 0.05);
   filter: blur(48px);
   transition: transform 0.1s ease-out;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .blob-hand {
@@ -294,6 +369,9 @@ const posts = [
   background-color: oklch(0.52 0.12 35 / 0.05);
   filter: blur(48px);
   transition: transform 0.1s ease-out;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 .blob-blog {
@@ -306,6 +384,9 @@ const posts = [
   background-color: oklch(0.78 0.06 60 / 0.05);
   filter: blur(48px);
   transition: transform 0.1s ease-out;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 // Hero content
@@ -632,6 +713,48 @@ const posts = [
   color: var(--muted-foreground);
 }
 
+// Skeleton loading state
+.project-skeleton {
+  background-color: var(--card);
+  border: 2px solid var(--border);
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// Empty state
+.featured-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--muted-foreground);
+  gap: 1rem;
+}
+
+.empty-icon {
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.5;
+}
+
 // ============================
 // Made by Hand Section
 // ============================
@@ -779,6 +902,56 @@ const posts = [
 .blog-footer {
   margin-top: 3rem;
   text-align: center;
+}
+
+// Blog skeleton loading state
+.blog-skeleton {
+  pointer-events: none;
+}
+
+.skeleton-tag {
+  width: 5rem;
+  height: 1.5rem;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+}
+
+.skeleton-title {
+  width: 100%;
+  height: 1.5rem;
+  margin-top: 1rem;
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+}
+
+.skeleton-title-short {
+  width: 60%;
+}
+
+// Blog empty state
+.blog-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--muted-foreground);
+  gap: 1rem;
 }
 
 // ============================

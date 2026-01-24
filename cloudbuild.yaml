@@ -57,7 +57,9 @@ steps:
       - '--timeout'
       - '300'
       - '--set-env-vars'
-      - 'NODE_ENV=production,API_URL=https://api.blichstudio.com'
+      - 'NODE_ENV=production'
+      - '--set-secrets'
+      - 'NUXT_API_URL=app-url:latest'
 
 # Substitution variables
 substitutions:

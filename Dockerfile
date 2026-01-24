@@ -15,14 +15,14 @@ COPY . .
 # Build the Nuxt application
 RUN bun run build
 
-# Production stage
-FROM oven/bun:1-slim AS runner
+# Production stage - use debian-based image for user creation
+FROM oven/bun:1-debian AS runner
 
 WORKDIR /app
 
 # Create non-root user for security
-RUN addgroup --system --gid 1001 nuxt && \
-    adduser --system --uid 1001 --gid 1001 nuxt
+RUN groupadd --system --gid 1001 nuxt && \
+    useradd --system --uid 1001 --gid 1001 nuxt
 
 # Copy built application from builder
 COPY --from=builder --chown=nuxt:nuxt /app/.output /app/.output

@@ -12,6 +12,7 @@ interface DisplayProject {
   id: string
   slug: string
   title: string
+  type: string
   description: string
   thumbnail?: string
   tags: string[]
@@ -20,11 +21,21 @@ interface DisplayProject {
   featured: boolean
 }
 
+const typeLabels: Record<string, string> = {
+  game: 'Game',
+  engine: 'Engine',
+  tool: 'Tool',
+  animation: 'Animation',
+  artwork: 'Artwork',
+  other: 'Project',
+}
+
 function transformProject(project: ProjectListItem): DisplayProject {
   return {
     id: project.id,
     slug: project.slug,
     title: project.title,
+    type: project.type,
     description: project.shortDescription || '',
     thumbnail: project.coverImageUrl ?? undefined,
     tags: project.tags.map(t => t.name),
@@ -137,7 +148,7 @@ const filteredProjects = computed(() => {
               <div :class="$style.projectImageWrapper">
                 <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" />
                 <div :class="$style.projectBadge">
-                  <Badge :class="$style.typeBadge">{{ project.type }}</Badge>
+                  <Badge :class="$style.typeBadge">{{ typeLabels[project.type] || 'Project' }}</Badge>
                 </div>
               </div>
               <div :class="$style.projectContent">
@@ -148,7 +159,7 @@ const filteredProjects = computed(() => {
                 </div>
                 <div :class="$style.projectMeta">
                   <span>{{ project.likes }} likes</span>
-                  <span>{{ new Date(project.releaseDate).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) }}</span>
+                  <span>{{ new Date(project.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }) }}</span>
                 </div>
               </div>
             </div>

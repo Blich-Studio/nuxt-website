@@ -25,6 +25,12 @@ interface DisplayArticle {
   isLiked: boolean
 }
 
+useHead({
+  bodyAttrs: {
+    class: 'article-detail',
+  },
+})
+
 function transformArticle(article: ApiArticle): DisplayArticle {
   return {
     id: article.id,
@@ -45,6 +51,7 @@ function transformArticle(article: ApiArticle): DisplayArticle {
 }
 
 const { getArticle, likeArticle, unlikeArticle } = useArticles()
+const { user, showAuthModal, initialized, fetchUser } = useAuth()
 
 const route = useRoute()
 const router = useRouter()
@@ -54,6 +61,7 @@ const article = ref<DisplayArticle | null>(null)
 const isLiked = ref(false)
 const likes = ref(0)
 const isLoading = ref(true)
+const isLiking = ref(false)
 const error = ref<string | null>(null)
 
 onMounted(async () => {
@@ -80,7 +88,22 @@ onMounted(async () => {
 
 async function handleLike() {
   if (!article.value) return
-  
+
+  // Ensure auth is initialized
+  if (!initialized.value) {
+    await fetchUser(true)
+  }
+
+  // Check if user is logged in
+  if (!user.value?.userId) {
+    showAuthModal()
+    return
+  }
+
+  // Prevent double-clicks
+  if (isLiking.value) return
+  isLiking.value = true
+
   try {
     if (isLiked.value) {
       const result = await unlikeArticle(article.value.id)
@@ -92,9 +115,13 @@ async function handleLike() {
       likes.value = result.likesCount
     }
   } catch (e: any) {
-    // If like fails (e.g., not logged in), show auth modal
-    const { showAuthModal } = useAuth()
-    showAuthModal()
+    console.error('Failed to like article:', e)
+    // If 401, show auth modal
+    if (e?.statusCode === 401 || e?.response?.status === 401) {
+      showAuthModal()
+    }
+  } finally {
+    isLiking.value = false
   }
 }
 
@@ -163,10 +190,10 @@ function renderContent(content: string) {
       <!-- Article Header -->
       <section :class="$style.articleSection">
         <div :class="$style.articleContainer">
-          <Button variant="ghost" as="a" to="/blog" :class="$style.backButton">
-            <span :class="$style.backIcon">←</span>
+          <NuxtLink to="/blog" :class="$style.backButton">
+            <Icon name="lucide:arrow-left" :class="$style.backIcon" />
             Back to Blog
-          </Button>
+          </NuxtLink>
 
           <article :class="$style.articleCard">
             <!-- Tags -->
@@ -182,7 +209,7 @@ function renderContent(content: string) {
             <!-- Meta -->
             <div :class="$style.articleMeta">
               <div :class="$style.authorInfo">
-                <img :src="article.authorAvatar || '/placeholder.svg'" :alt="article.author" :class="$style.authorAvatar" />
+                <img :src="article.authorAvatar || '/placeholder-user.jpg'" :alt="article.author" :class="$style.authorAvatar" />
                 <div>
                   <div :class="$style.authorName">{{ article.author }}</div>
                   <div :class="$style.authorBio">{{ article.authorBio }}</div>
@@ -225,7 +252,7 @@ function renderContent(content: string) {
 
           <!-- Comments -->
           <div :class="$style.commentsSection">
-            <CommentSection content-type="article" :content-id="id" />
+            <CommentSection content-type="article" :content-id="article.id" />
           </div>
         </div>
       </section>
@@ -294,7 +321,7 @@ function renderContent(content: string) {
 .heroOverlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, $color-background, rgba(0, 0, 0, 0.7), transparent);
+  background: linear-gradient(to top, var(--background), rgba(0, 0, 0, 0.5), transparent);
 }
 
 .articleSection {
@@ -310,19 +337,34 @@ function renderContent(content: string) {
 }
 
 .backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
   margin-left: -1rem;
+  font-size: $text-sm;
+  font-weight: 500;
+  color: var(--foreground);
+  border-radius: 0.375rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+  }
 }
 
 .backIcon {
-  margin-right: 0.5rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .articleCard {
-  background-color: rgba(var(--card-rgb, 0, 0, 0), 0.95);
+  background-color: var(--card);
   backdrop-filter: blur(4px);
   border-radius: 1rem;
-  border: 1px solid $color-border;
+  border: 1px solid var(--border);
   padding: 2rem;
 
   @media (min-width: $breakpoint-md) {
@@ -426,7 +468,8 @@ function renderContent(content: string) {
 .contentParagraph {
   margin-bottom: 1.5rem;
   line-height: 1.7;
-  color: $color-muted-foreground;
+  color: var(--foreground);
+  opacity: 0.85;
 }
 
 .commentsSection {

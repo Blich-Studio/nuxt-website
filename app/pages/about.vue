@@ -27,7 +27,7 @@ const teamMembers = [
           Every frame is crafted with care, bringing tactile, authentic art to life.
         </p>
         <p>
-          Founded in 2020, Blich Studio brings together talented artists, animators, and developers who share a love
+          Founded in 2024, Blich Studio brings together talented artists, animators, and developers who share a love
           for the meticulous craft of stop motion and handcrafted animation.
         </p>
         <p>

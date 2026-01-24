@@ -29,7 +29,7 @@ async function submit() {
   loading.value = true
   error.value = null
   try {
-    await signIn({ name: name.value.trim() || email.value.split('@')[0], email: email.value.trim() })
+    await signIn({ email: email.value.trim(), password: password.value })
     close()
   } catch (e: any) {
     error.value = e?.message ?? 'Authentication failed'

@@ -1,4 +1,4 @@
-import type { Article, ArticleListItem, ArticleFilters, ArticlePagination, ApiResponse, ApiMeta, Comment, CreateCommentInput, Tag, LikeStatus } from '~/types/api'
+import type { Article, ArticleListItem, ArticleFilters, ArticlePagination, ApiMeta, Comment, Tag, LikeStatus } from '~/types/api'
 
 export function useArticles() {
   const api = useApi()
@@ -17,7 +17,7 @@ export function useArticles() {
     }
 
     const response = await api<{ data: ArticleListItem[]; meta: ApiMeta }>('/articles', { query })
-    
+
     return {
       articles: response.data || [],
       meta: response.meta || {},
@@ -33,8 +33,8 @@ export function useArticles() {
       const endpoint = idOrSlug.match(/^[0-9a-f-]{36}$/i)
         ? `/articles/${idOrSlug}`
         : `/articles/slug/${idOrSlug}`
-      const response = await api<{ data: Article }>(endpoint)
-      return response.data || null
+      const response = await api<Article>(endpoint)
+      return response || null
     } catch (error: any) {
       if (error?.statusCode === 404 || error?.response?.status === 404) {
         return null
@@ -48,8 +48,8 @@ export function useArticles() {
    */
   async function getTags(): Promise<Tag[]> {
     try {
-      const response = await api<{ data: Tag[] }>('/tags')
-      return response.data || []
+      const response = await api<Tag[]>('/tags')
+      return response || []
     } catch {
       return []
     }
@@ -59,16 +59,14 @@ export function useArticles() {
    * Like an article
    */
   async function likeArticle(articleId: string): Promise<LikeStatus> {
-    const response = await api<{ data: LikeStatus }>(`/articles/${articleId}/like`, { method: 'POST' })
-    return response.data
+    return await api<LikeStatus>(`/articles/${articleId}/like`, { method: 'POST' })
   }
 
   /**
    * Unlike an article
    */
   async function unlikeArticle(articleId: string): Promise<LikeStatus> {
-    const response = await api<{ data: LikeStatus }>(`/articles/${articleId}/like`, { method: 'DELETE' })
-    return response.data
+    return await api<LikeStatus>(`/articles/${articleId}/like`, { method: 'DELETE' })
   }
 
   /**
@@ -95,28 +93,25 @@ export function useArticles() {
   /**
    * Add a comment to an article
    */
-  async function addComment(articleId: string, content: string): Promise<Comment> {
-    const response = await api<{ data: Comment }>('/comments', {
+  async function addComment(articleId: string, content: string, parentId?: string): Promise<Comment> {
+    return await api<Comment>('/comments', {
       method: 'POST',
-      body: { articleId, content },
+      body: { articleId, content, parentId },
     })
-    return response.data
   }
 
   /**
    * Like a comment
    */
   async function likeComment(commentId: string): Promise<LikeStatus> {
-    const response = await api<{ data: LikeStatus }>(`/comments/${commentId}/like`, { method: 'POST' })
-    return response.data
+    return await api<LikeStatus>(`/comments/${commentId}/like`, { method: 'POST' })
   }
 
   /**
    * Unlike a comment
    */
   async function unlikeComment(commentId: string): Promise<LikeStatus> {
-    const response = await api<{ data: LikeStatus }>(`/comments/${commentId}/like`, { method: 'DELETE' })
-    return response.data
+    return await api<LikeStatus>(`/comments/${commentId}/like`, { method: 'DELETE' })
   }
 
   /**

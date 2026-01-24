@@ -1,84 +1,135 @@
-import { ref } from 'vue'
-import { useApi } from './useApi'
 import { useAuthModal } from './useAuthModal'
 
-const user = ref<any>(null)
-const loading = ref(false)
-const initialized = ref(false)
+export interface AuthUser {
+  userId: string
+  email: string
+  name?: string
+}
 
 export function useAuth() {
-  const api = useApi()
-  const config = useRuntimeConfig()
+  // SSR-safe shared state using useState
+  const user = useState<AuthUser | null>('auth-user', () => null)
+  const loading = useState<boolean>('auth-loading', () => false)
+  const initialized = useState<boolean>('auth-initialized', () => false)
+  const lastFetchTime = useState<number>('auth-last-fetch', () => 0)
 
-  if (!config?.public?.apiUrl) {
-    throw new Error('Missing API_URL runtime config. Set runtimeConfig.public.apiUrl to your API gateway.')
-  }
+  // Minimum time between fetchUser calls (prevents excessive API calls)
+  const FETCH_COOLDOWN_MS = 5000
 
-  // Check if there's an auth cookie present
-  function hasAuthCookie(): boolean {
-    if (typeof document === 'undefined') return false
-    // Look for common auth cookie names (adjust based on your API's cookie name)
-    const cookies = document.cookie
-    return cookies.includes('access_token') || 
-           cookies.includes('auth_token') || 
-           cookies.includes('session') ||
-           cookies.includes('jwt')
-  }
+  /**
+   * Fetch current user from API
+   * Uses the server-side proxy which handles:
+   * - HttpOnly cookie-based authentication
+   * - Automatic token refresh on 401
+   */
+  async function fetchUser(force = false): Promise<AuthUser | null> {
+    // Prevent concurrent fetches
+    if (loading.value) return user.value
 
-  async function fetchUser() {
-    // Skip API call if no auth cookie is present
-    if (!hasAuthCookie()) {
-      user.value = null
-      initialized.value = true
-      return
+    // Respect cooldown unless forced
+    const now = Date.now()
+    if (!force && initialized.value && now - lastFetchTime.value < FETCH_COOLDOWN_MS) {
+      return user.value
     }
 
     loading.value = true
+
     try {
-      const res: any = await api('/auth/me')
-      user.value = res?.user ?? null
+      const res = await $fetch<AuthUser>('/api/_proxy/auth/me', {
+        credentials: 'include',
+      })
+
+      // API returns user object directly: {userId, email, name}
+      user.value = res ?? null
+      lastFetchTime.value = Date.now()
+      return user.value
+    } catch (e: any) {
+      // 401 means not authenticated (proxy already tried to refresh)
+      if (e?.statusCode === 401 || e?.response?.status === 401) {
+        user.value = null
+      }
+      // For other errors (network, 500), don't clear user state
+      // This prevents logout on temporary server issues
+      return user.value
+    } finally {
+      loading.value = false
+      initialized.value = true
+    }
+  }
+
+  /**
+   * Sign in with email and password
+   * The server-side proxy stores tokens in HttpOnly cookies
+   */
+  async function signIn(credentials: { email: string; password: string }): Promise<AuthUser> {
+    loading.value = true
+
+    try {
+      const res = await $fetch<{ user: { id: string; email: string; name?: string } }>('/api/_proxy/auth/login', {
+        method: 'POST',
+        body: credentials,
+        credentials: 'include',
+      })
+
+      // Login response has user.id, map to userId for consistency
+      if (res?.user) {
+        user.value = {
+          userId: res.user.id,
+          email: res.user.email,
+          name: res.user.name,
+        }
+      } else {
+        user.value = null
+      }
+
+      lastFetchTime.value = Date.now()
+
+      if (!user.value) {
+        throw new Error('Invalid login response')
+      }
+
+      return user.value
+    } finally {
+      loading.value = false
+      initialized.value = true
+    }
+  }
+
+  /**
+   * Sign out - clears cookies and user state
+   */
+  async function signOut(): Promise<void> {
+    try {
+      await $fetch('/api/_proxy/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      })
     } catch (e) {
-      user.value = null
-    } finally {
-      loading.value = false
-      initialized.value = true
-    }
-  }
-
-  async function signIn(credentials?: { name?: string; email?: string }) {
-    loading.value = true
-    try {
-      const res: any = await api('/auth/login', { method: 'POST', body: credentials })
-      if (!res || !res.user) throw new Error('Invalid login response')
-      user.value = res.user
-      return res.user
-    } finally {
-      loading.value = false
-    }
-  }
-
-  async function signOut() {
-    try {
-      await api('/auth/logout', { method: 'POST' })
+      // Ignore logout errors - clear state anyway
+      console.error('Logout error:', e)
     } finally {
       user.value = null
     }
   }
 
+  /**
+   * Show authentication modal
+   */
   function showAuthModal() {
     const { open } = useAuthModal()
     open()
   }
 
-  // Only fetch user on client-side if not already initialized
-  if (typeof window !== 'undefined' && !initialized.value) {
-    fetchUser()
-  }
+  /**
+   * Check if user is authenticated
+   */
+  const isAuthenticated = computed(() => !!user.value?.userId)
 
   return {
     user,
     loading,
     initialized,
+    isAuthenticated,
     fetchUser,
     signIn,
     signOut,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const currentYear = new Date().getFullYear()
 </script>
 
 <template>
@@ -72,7 +73,7 @@
       </div>
 
       <div :class="$style.copyright">
-        <p>&copy; 2025 Blich Studio. All rights reserved.</p>
+        <p>&copy; {{ currentYear }} Blich Studio. All rights reserved.</p>
       </div>
     </div>
   </footer>

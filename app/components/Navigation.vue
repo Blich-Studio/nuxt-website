@@ -74,7 +74,7 @@ const navLinks = [
           </button>
 
           <!-- Auth -->
-          <template v-if="user && user.name">
+          <template v-if="user && user.userId">
             <div :class="$style.authSection">
               <span :class="$style.greeting">Hello, {{ user.name }}</span>
               <Button size="sm" variant="outline" @click="signOut" :class="$style.authButton">
@@ -114,7 +114,7 @@ const navLinks = [
           <Icon v-else name="lucide:moon" :class="$style.icon" />
           {{ theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}
         </button>
-        <template v-if="user && user.name">
+        <template v-if="user && user.userId">
           <div :class="$style.mobileGreeting">Hello, {{ user.name }}</div>
           <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="signOut">
             <Icon name="lucide:log-out" :class="$style.buttonIcon" />
@@ -155,6 +155,13 @@ const navLinks = [
 
 :global(.dark) .navScrolled {
   background-color: oklch(0.12 0.015 280 / 0.95);
+}
+
+:global(body.article-detail) .nav {
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background-color: var(--background);
 }
 
 .container {
