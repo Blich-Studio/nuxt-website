@@ -76,3 +76,6 @@ Desktop.ini
 
 # Netlify
 .netlify
+
+# Terraform
+.terraform/
