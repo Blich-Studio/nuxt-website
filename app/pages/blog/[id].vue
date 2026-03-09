@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { marked } from 'marked'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
@@ -143,9 +144,10 @@ function formatDate(date: string) {
   })
 }
 
-function renderContent(content: string) {
-  return content.split('\n\n')
-}
+const renderedContent = computed(() => {
+  if (!article.value) return ''
+  return marked(article.value.content)
+})
 </script>
 
 <template>
@@ -238,16 +240,7 @@ function renderContent(content: string) {
             </div>
 
             <!-- Content -->
-            <div :class="$style.content">
-              <template v-for="(paragraph, idx) in renderContent(article.content)" :key="idx">
-                <h2 v-if="paragraph.startsWith('## ')" :class="$style.contentHeading">
-                  {{ paragraph.replace('## ', '') }}
-                </h2>
-                <p v-else :class="$style.contentParagraph">
-                  {{ paragraph }}
-                </p>
-              </template>
-            </div>
+            <div :class="$style.content" v-html="renderedContent" />
           </article>
 
           <!-- Comments -->
@@ -453,23 +446,92 @@ function renderContent(content: string) {
 }
 
 .content {
-  // Prose-like styling
-}
-
-.contentHeading {
-  font-family: $font-display;
-  font-size: $text-2xl;
-  font-weight: 700;
-  margin-top: 3rem;
-  margin-bottom: 1rem;
-  color: $color-foreground;
-}
-
-.contentParagraph {
-  margin-bottom: 1.5rem;
-  line-height: 1.7;
+  line-height: 1.8;
   color: var(--foreground);
-  opacity: 0.85;
+
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4) {
+    font-family: $font-display;
+    font-weight: 700;
+    color: $color-foreground;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  :deep(h1) { font-size: $text-3xl; }
+  :deep(h2) { font-size: $text-2xl; }
+  :deep(h3) { font-size: $text-xl; }
+
+  :deep(p) {
+    margin-bottom: 1.5rem;
+    opacity: 0.85;
+  }
+
+  :deep(strong) {
+    font-weight: 700;
+    opacity: 1;
+  }
+
+  :deep(em) {
+    font-style: italic;
+  }
+
+  :deep(a) {
+    color: var(--clay-orange);
+    text-decoration: underline;
+  }
+
+  :deep(ul),
+  :deep(ol) {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  :deep(li) {
+    margin-bottom: 0.5rem;
+  }
+
+  :deep(blockquote) {
+    border-left: 3px solid var(--clay-orange);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    opacity: 0.85;
+    font-style: italic;
+  }
+
+  :deep(code) {
+    background: var(--muted);
+    padding: 0.15rem 0.4rem;
+    border-radius: $radius-sm;
+    font-size: 0.9em;
+  }
+
+  :deep(pre) {
+    background: var(--muted);
+    padding: 1rem;
+    border-radius: $radius-md;
+    overflow-x: auto;
+    margin-bottom: 1.5rem;
+
+    code {
+      background: none;
+      padding: 0;
+    }
+  }
+
+  :deep(img) {
+    max-width: 100%;
+    border-radius: $radius-md;
+    margin: 1.5rem 0;
+  }
+
+  :deep(hr) {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 2rem 0;
+  }
 }
 
 .commentsSection {
