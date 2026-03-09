@@ -146,7 +146,7 @@ const filteredProjects = computed(() => {
           <div v-if="filteredProjects.length > 0" :class="$style.projectsGrid">
             <div v-for="project in filteredProjects" :key="project.id" :class="$style.projectCard" @click="openProject(project.slug)">
               <div :class="$style.projectImageWrapper">
-                <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" />
+                <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.projectImage" @error="(e) => ((e.target as HTMLImageElement).src = '/placeholder.svg')" />
                 <div :class="$style.projectBadge">
                   <Badge :class="$style.typeBadge">{{ typeLabels[project.type] || 'Project' }}</Badge>
                 </div>
