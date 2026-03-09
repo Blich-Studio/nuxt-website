@@ -21,7 +21,7 @@ data "terraform_remote_state" "shared" {
 }
 
 module "nuxt_website" {
-  source = "../../terraform-modules/modules/cloud-run"
+  source = "../terraform-modules/modules/cloud-run"
 
   service_name    = "blich-website"
   environment     = data.terraform_remote_state.shared.outputs.environment
