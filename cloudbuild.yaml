@@ -11,7 +11,7 @@ steps:
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:${SHORT_SHA}'
       - '-t'
       - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_ARTIFACT_REPO}/${_SERVICE_NAME}:latest'
-      - '.'
+      - 'nuxt-website/'
 
   # Step 2: Push image
   - name: 'gcr.io/cloud-builders/docker'
@@ -21,13 +21,13 @@ steps:
   # Step 3: Terraform init
   - name: 'hashicorp/terraform:1.9'
     id: 'tf-init'
-    dir: 'deploy'
+    dir: 'nuxt-website/deploy'
     args: ['init', '-input=false']
 
   # Step 4: Terraform plan
   - name: 'hashicorp/terraform:1.9'
     id: 'tf-plan'
-    dir: 'deploy'
+    dir: 'nuxt-website/deploy'
     args:
       - 'plan'
       - '-input=false'
@@ -37,7 +37,7 @@ steps:
   # Step 5: Terraform apply
   - name: 'hashicorp/terraform:1.9'
     id: 'tf-apply'
-    dir: 'deploy'
+    dir: 'nuxt-website/deploy'
     args: ['apply', '-input=false', 'tfplan']
 
 substitutions:

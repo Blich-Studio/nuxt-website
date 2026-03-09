@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import Button from '~/components/ui/Button.vue'
 
 const route = useRoute()
-const router = useRouter()
+const { showAuthModal } = useAuth()
 
 const status = ref<'loading' | 'success' | 'error'>('loading')
 const message = ref('Verifying your email...')
-const showPopup = ref(false)
+
+const resendEmail = ref('')
+const resendStatus = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
 useHead({
   title: 'Verify Email',
@@ -16,22 +19,22 @@ onMounted(async () => {
   const token = typeof route.query.token === 'string' ? route.query.token : ''
   if (!token) {
     status.value = 'error'
-    message.value = 'Missing verification token.'
+    message.value = 'No verification token provided.'
     return
   }
 
-  try {
-    await $fetch('/api/_proxy/auth/verify', {
-      query: { token },
-      credentials: 'include',
-    })
-    status.value = 'success'
-    message.value = 'Account activated successfully.'
-    showPopup.value = true
+  const minDelay = new Promise(resolve => setTimeout(resolve, 500))
 
-    setTimeout(() => {
-      router.push('/')
-    }, 2200)
+  try {
+    await Promise.all([
+      $fetch('/api/_proxy/auth/verify', {
+        query: { token },
+        credentials: 'include',
+      }),
+      minDelay,
+    ])
+    status.value = 'success'
+    message.value = 'Your email has been verified.'
   } catch (e: any) {
     status.value = 'error'
     message.value =
@@ -40,6 +43,21 @@ onMounted(async () => {
       'Verification failed. Please request a new link.'
   }
 })
+
+async function handleResend() {
+  if (!resendEmail.value.trim()) return
+  resendStatus.value = 'sending'
+  try {
+    await $fetch('/api/_proxy/auth/resend-verification', {
+      method: 'POST',
+      body: { email: resendEmail.value.trim() },
+      credentials: 'include',
+    })
+    resendStatus.value = 'sent'
+  } catch {
+    resendStatus.value = 'error'
+  }
+}
 </script>
 
 <template>
@@ -65,19 +83,41 @@ onMounted(async () => {
       </h1>
       <p :class="$style.message">{{ message }}</p>
 
-      <div v-if="status === 'error'" :class="$style.actions">
-        <NuxtLink to="/" :class="$style.primaryBtn">Go Home</NuxtLink>
-        <NuxtLink to="/blog" :class="$style.ghostBtn">Browse Blog</NuxtLink>
+      <div v-if="status === 'success'" :class="$style.actions">
+        <Button @click="showAuthModal">Log In</Button>
+        <Button variant="ghost" to="/blog">Browse Blog</Button>
       </div>
-    </div>
 
-    <div v-if="showPopup" :class="$style.popup">
-      <div :class="$style.popupCard">
-        <Icon name="lucide:check-circle-2" :class="$style.popupIcon" />
-        <div>
-          <div :class="$style.popupTitle">Account activated</div>
-          <div :class="$style.popupText">Redirecting to homepage...</div>
-        </div>
+      <div v-if="status === 'error'" :class="$style.actions">
+        <Button variant="ghost" to="/">Go Home</Button>
+        <Button variant="ghost" to="/blog">Browse Blog</Button>
+      </div>
+
+      <div v-if="status === 'error'" :class="$style.resendSection">
+        <p :class="$style.resendLabel">Didn't receive the email?</p>
+        <form :class="$style.resendRow" @submit.prevent="handleResend">
+          <input
+            v-model="resendEmail"
+            type="email"
+            placeholder="Enter your email"
+            :class="$style.resendInput"
+            :disabled="resendStatus === 'sending' || resendStatus === 'sent'"
+            required
+          />
+          <Button
+            type="submit"
+            size="sm"
+            :disabled="resendStatus === 'sending' || resendStatus === 'sent'"
+          >
+            {{ resendStatus === 'sending' ? 'Sending...' : 'Resend' }}
+          </Button>
+        </form>
+        <p v-if="resendStatus === 'sent'" :class="$style.resendMessage">
+          If this email is registered, a new verification link has been sent.
+        </p>
+        <p v-if="resendStatus === 'error'" :class="$style.resendError">
+          Something went wrong. Please try again.
+        </p>
       </div>
     </div>
   </div>
@@ -229,60 +269,55 @@ onMounted(async () => {
   flex-wrap: wrap;
 }
 
-.primaryBtn,
-.ghostBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: 999px;
-  padding: 0.6rem 1.25rem;
-  font-size: $text-sm;
-  font-weight: 600;
+.resendSection {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
 }
 
-.primaryBtn {
-  background: var(--clay-orange);
-  color: var(--primary-foreground);
-}
-
-.ghostBtn {
-  border: 1px solid var(--border);
-  color: var(--foreground);
-}
-
-.popup {
-  position: fixed;
-  inset: auto 1rem 1.5rem 1rem;
-  display: flex;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.popupCard {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.75rem;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.75rem 1.25rem;
-  box-shadow: 0 12px 30px -20px rgba(0, 0, 0, 0.4);
-}
-
-.popupIcon {
-  width: 1.5rem;
-  height: 1.5rem;
-  color: var(--clay-orange);
-}
-
-.popupTitle {
-  font-weight: 600;
-}
-
-.popupText {
-  font-size: $text-xs;
+.resendLabel {
   color: $color-muted-foreground;
+  font-size: $text-sm;
+  margin: 0 0 0.75rem;
+}
+
+.resendRow {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.resendInput {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: $radius-md;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: $text-sm;
+
+  &:focus {
+    outline: none;
+    border-color: var(--clay-orange);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--clay-orange) 15%, transparent);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.resendMessage {
+  color: var(--clay-orange);
+  font-size: $text-sm;
+  margin: 0.75rem 0 0;
+  text-align: left;
+}
+
+.resendError {
+  color: var(--destructive);
+  font-size: $text-sm;
+  margin: 0.75rem 0 0;
+  text-align: left;
 }
 
 @keyframes spin {

@@ -198,7 +198,7 @@ async function handleLike() {
             </a>
           </div>
           <div :class="$style.imageWrapper">
-            <img :src="project.thumbnail || '/placeholder.jpg'" :alt="project.title" :class="$style.image" />
+            <img :src="project.thumbnail || '/placeholder.svg'" :alt="project.title" :class="$style.image" @error="(e) => ((e.target as HTMLImageElement).src = '/placeholder.svg')" />
           </div>
           <div :class="$style.prose">
             <p>{{ project.description }}</p>
@@ -280,13 +280,16 @@ async function handleLike() {
 }
 
 .imageWrapper {
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 0.75rem;
   margin-bottom: 1.5rem;
+  background-color: var(--muted);
 }
 
 .image {
   width: 100%;
-  height: auto;
-  border-radius: 0.75rem;
+  height: 100%;
   object-fit: cover;
 }
 
