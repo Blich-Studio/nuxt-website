@@ -47,7 +47,7 @@ const navLinks = [
 </script>
 
 <template>
-  <nav :class="[$style.nav, isScrolled && $style.navScrolled]">
+  <nav :class="[$style.nav, isScrolled && $style.navScrolled, isMobileMenuOpen && $style.navMobileOpen]">
     <div :class="$style.container">
       <div :class="$style.inner">
         <!-- Logo -->
@@ -155,6 +155,14 @@ const navLinks = [
 
 :global(.dark) .navScrolled {
   background-color: oklch(0.12 0.015 280 / 0.95);
+}
+
+.navMobileOpen {
+  background-color: var(--background);
+}
+
+:global(.dark) .navMobileOpen {
+  background-color: var(--background);
 }
 
 :global(body.article-detail) .nav {

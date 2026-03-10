@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import Button from '~/components/ui/Button.vue'
 
 const route = useRoute()
@@ -15,6 +15,9 @@ useHead({
   title: 'Verify Email',
 })
 
+const redirectCountdown = ref(0)
+let countdownInterval: ReturnType<typeof setInterval> | undefined
+
 onMounted(async () => {
   const token = typeof route.query.token === 'string' ? route.query.token : ''
   if (!token) {
@@ -24,17 +27,32 @@ onMounted(async () => {
   }
 
   const minDelay = new Promise(resolve => setTimeout(resolve, 500))
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+  )
 
   try {
     await Promise.all([
-      $fetch('/api/_proxy/auth/verify', {
-        query: { token },
-        credentials: 'include',
-      }),
+      Promise.race([
+        $fetch('/api/_proxy/auth/verify', {
+          query: { token },
+        }),
+        timeout,
+      ]),
       minDelay,
     ])
     status.value = 'success'
     message.value = 'Your email has been verified.'
+
+    // Auto-redirect countdown
+    redirectCountdown.value = 5
+    countdownInterval = setInterval(() => {
+      redirectCountdown.value--
+      if (redirectCountdown.value <= 0) {
+        clearInterval(countdownInterval)
+        navigateTo('/')
+      }
+    }, 1000)
   } catch (e: any) {
     status.value = 'error'
     message.value =
@@ -42,6 +60,10 @@ onMounted(async () => {
       e?.statusMessage ||
       'Verification failed. Please request a new link.'
   }
+})
+
+onBeforeUnmount(() => {
+  if (countdownInterval) clearInterval(countdownInterval)
 })
 
 async function handleResend() {
@@ -85,8 +107,11 @@ async function handleResend() {
 
       <div v-if="status === 'success'" :class="$style.actions">
         <Button @click="showAuthModal">Log In</Button>
-        <Button variant="ghost" to="/blog">Browse Blog</Button>
+        <Button variant="ghost" to="/">Go to Homepage</Button>
       </div>
+      <p v-if="status === 'success' && redirectCountdown > 0" :class="$style.redirectNote">
+        Redirecting to homepage in {{ redirectCountdown }}s...
+      </p>
 
       <div v-if="status === 'error'" :class="$style.actions">
         <Button variant="ghost" to="/">Go Home</Button>
@@ -267,6 +292,13 @@ async function handleResend() {
   gap: 0.75rem;
   margin-top: 1.75rem;
   flex-wrap: wrap;
+}
+
+.redirectNote {
+  color: $color-muted-foreground;
+  font-size: $text-sm;
+  margin-top: 0.75rem;
+  text-align: center;
 }
 
 .resendSection {

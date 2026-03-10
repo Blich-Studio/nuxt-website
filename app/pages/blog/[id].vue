@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { marked } from 'marked'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '~/components/ui/Button.vue'
@@ -144,10 +144,12 @@ function formatDate(date: string) {
   })
 }
 
-const renderedContent = computed(() => {
-  if (!article.value) return ''
-  return marked(article.value.content)
-})
+const renderedContent = ref('')
+
+watch(() => article.value?.content, async (content) => {
+  if (!content) return
+  renderedContent.value = await marked(content)
+}, { immediate: true })
 </script>
 
 <template>
