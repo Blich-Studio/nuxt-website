@@ -16,6 +16,18 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
         { name: 'theme-color', content: '#1E1A26' },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
+        { property: 'og:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
+        { property: 'og:image', content: 'https://blichstudio.com/og-image.png' },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:url', content: 'https://blichstudio.com' },
+        { property: 'og:site_name', content: 'Blich Studio' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
+        { name: 'twitter:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
+        { name: 'twitter:image', content: 'https://blichstudio.com/og-image.png' },
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' },
