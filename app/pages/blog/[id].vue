@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { marked } from 'marked'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
-import Skeleton from '~/components/ui/Skeleton.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
 import type { Article as ApiArticle } from '~/types/api'
@@ -58,34 +57,14 @@ const route = useRoute()
 const router = useRouter()
 const id = route.params.id as string
 
-const article = ref<DisplayArticle | null>(null)
-const isLiked = ref(false)
-const likes = ref(0)
-const isLoading = ref(true)
-const isLiking = ref(false)
-const error = ref<string | null>(null)
-
-onMounted(async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const result = await getArticle(id)
-    
-    if (result) {
-      article.value = transformArticle(result)
-      likes.value = article.value.likes
-      isLiked.value = article.value.isLiked
-    } else {
-      article.value = null
-    }
-  } catch (e: any) {
-    console.error('Failed to fetch article:', e)
-    error.value = e.message || 'Failed to load article'
-  } finally {
-    isLoading.value = false
-  }
+const { data: article, error } = await useAsyncData(`article-${id}`, async () => {
+  const result = await getArticle(id)
+  return result ? transformArticle(result) : null
 })
+
+const isLiked = ref(article.value?.isLiked || false)
+const likes = ref(article.value?.likes || 0)
+const isLiking = ref(false)
 
 async function handleLike() {
   if (!article.value) return
@@ -154,19 +133,16 @@ watch(() => article.value?.content, async (content) => {
 
 <template>
   <div :class="$style.page">
-    <!-- Loading State -->
-    <template v-if="isLoading">
-      <div :class="$style.loadingContainer">
-        <div :class="$style.loadingInner">
-          <Skeleton variant="image" height="24rem" :class="$style.skeletonHero" />
-          <Skeleton variant="text" width="80%" height="3rem" :class="$style.skeletonTitle" />
-          <div :class="$style.skeletonMeta">
-            <Skeleton variant="circular" width="48px" height="48px" />
-            <Skeleton variant="text" width="150px" height="1rem" />
-            <Skeleton variant="text" width="100px" height="1rem" />
-          </div>
-          <Skeleton variant="text" :lines="6" :class="$style.skeletonContent" />
-        </div>
+    <!-- Error State -->
+    <template v-if="error">
+      <div :class="$style.notFound">
+        <EmptyState
+          icon="lucide:alert-circle"
+          title="Something Went Wrong"
+          :description="error?.message || 'We couldn\'t load this article. Please try again later.'"
+          action-label="Back to Blog"
+          action-to="/blog"
+        />
       </div>
     </template>
 
@@ -262,35 +238,6 @@ watch(() => article.value?.content, async (content) => {
 
 .page {
   min-height: 100vh;
-}
-
-.loadingContainer {
-  min-height: 100vh;
-  padding: 5rem 1rem;
-}
-
-.loadingInner {
-  max-width: 48rem;
-  margin: 0 auto;
-}
-
-.skeletonHero {
-  margin-bottom: 2rem;
-}
-
-.skeletonTitle {
-  margin-bottom: 1.5rem;
-}
-
-.skeletonMeta {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.skeletonContent {
-  margin-top: 1rem;
 }
 
 .notFound {

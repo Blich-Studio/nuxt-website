@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
-import Skeleton from '../../components/ui/Skeleton.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
 import type { ProjectListItem } from '~/types/api'
@@ -47,32 +46,23 @@ function transformProject(project: ProjectListItem): DisplayProject {
 
 const { getProjects } = useProjects()
 
-const projects = ref<DisplayProject[]>([])
 const selectedTag = ref<string>('all')
-const allTags = ref<string[]>([])
-const isLoading = ref(true)
-const error = ref<string | null>(null)
 const router = useRouter()
 
-onMounted(async () => {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const result = await getProjects()
-    projects.value = result.projects.map(transformProject)
-    
-    // Extract unique tags from projects
-    const tagSet = new Set<string>()
-    result.projects.forEach(p => p.tags.forEach(t => tagSet.add(t.name)))
-    allTags.value = Array.from(tagSet).sort()
-  } catch (e: any) {
-    console.error('Failed to fetch projects:', e)
-    error.value = e.message || 'Failed to load projects'
-  } finally {
-    isLoading.value = false
+const { data: projectsData, error } = await useAsyncData('projects-list', async () => {
+  const result = await getProjects()
+  const tagSet = new Set<string>()
+  result.projects.forEach(p => p.tags.forEach(t => tagSet.add(t.name)))
+  return {
+    projects: result.projects.map(transformProject),
+    tags: Array.from(tagSet).sort(),
   }
+}, {
+  default: () => ({ projects: [] as DisplayProject[], tags: [] as string[] }),
 })
+
+const projects = computed(() => projectsData.value.projects)
+const allTags = computed(() => projectsData.value.tags)
 
 function setFilter(value: string) { selectedTag.value = value }
 function openProject(slug: string) { router.push(`/projects/${slug}`) }
@@ -122,25 +112,10 @@ const filteredProjects = computed(() => {
           v-if="error"
           icon="lucide:alert-circle"
           title="Failed to Load Projects"
-          :description="error"
+          :description="error?.message || 'Failed to load projects'"
           action-label="Try Again"
           @action="() => $router.go(0)"
         />
-
-        <!-- Loading State -->
-        <div v-else-if="isLoading" :class="$style.loadingGrid">
-          <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
-            <Skeleton variant="image" height="200px" />
-            <div :class="$style.skeletonContent">
-              <Skeleton variant="text" width="70%" height="1.25rem" />
-              <Skeleton variant="text" :lines="2" />
-              <div :class="$style.skeletonTags">
-                <Skeleton variant="rectangular" width="60px" height="20px" />
-                <Skeleton variant="rectangular" width="80px" height="20px" />
-              </div>
-            </div>
-          </div>
-        </div>
 
         <template v-else>
           <div v-if="filteredProjects.length > 0" :class="$style.projectsGrid">
@@ -273,40 +248,6 @@ const filteredProjects = computed(() => {
 .contentContainer {
   max-width: 80rem;
   margin: 0 auto;
-}
-
-.loadingGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: $breakpoint-lg) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.skeletonCard {
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background-color: $color-card;
-  border: 1px solid $color-border;
-}
-
-.skeletonContent {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.skeletonTags {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
 .projectsGrid {

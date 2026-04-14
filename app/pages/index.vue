@@ -7,12 +7,18 @@ const { getArticles } = useArticles()
 
 const scrollY = ref(0)
 const mousePosition = ref({ x: 0, y: 0 })
-const featuredProjects = ref<ProjectListItem[]>([])
-const featuredArticles = ref<ArticleListItem[]>([])
-const isLoadingProjects = ref(true)
-const isLoadingArticles = ref(true)
 
-onMounted(async () => {
+const { data: featuredProjects } = await useAsyncData('home-featured-projects', () => getFeaturedProjects(4), {
+  default: () => [] as ProjectListItem[],
+})
+
+const { data: articlesData } = await useAsyncData('home-featured-articles', () => getArticles(undefined, { limit: 3 }), {
+  default: () => ({ articles: [] as ArticleListItem[], meta: {} }),
+})
+
+const featuredArticles = computed(() => articlesData.value.articles)
+
+onMounted(() => {
   const handleScroll = () => (scrollY.value = window.scrollY)
   const handleMouseMove = (e: MouseEvent) => (mousePosition.value = { x: e.clientX, y: e.clientY })
 
@@ -23,26 +29,6 @@ onMounted(async () => {
     window.removeEventListener('scroll', handleScroll)
     window.removeEventListener('mousemove', handleMouseMove)
   })
-
-  // Fetch featured projects and articles in parallel
-  const [projectsResult, articlesResult] = await Promise.allSettled([
-    getFeaturedProjects(4),
-    getArticles(undefined, { limit: 3 }),
-  ])
-
-  if (projectsResult.status === 'fulfilled') {
-    featuredProjects.value = projectsResult.value
-  } else {
-    console.error('Failed to fetch featured projects:', projectsResult.reason)
-  }
-  isLoadingProjects.value = false
-
-  if (articlesResult.status === 'fulfilled') {
-    featuredArticles.value = articlesResult.value.articles
-  } else {
-    console.error('Failed to fetch featured articles:', articlesResult.reason)
-  }
-  isLoadingArticles.value = false
 })
 
 const logoScale = computed(() => Math.max(0.3, 1 - scrollY.value * 0.002))
@@ -163,15 +149,8 @@ function getReadTime(article: ArticleListItem): string {
           </NuxtLink>
         </div>
 
-        <!-- Loading state -->
-        <div v-if="isLoadingProjects" class="projects-grid">
-          <div v-for="i in 4" :key="i" class="project-card project-skeleton" :class="{ 'project-card-large': i === 1 || i === 4 }">
-            <div class="skeleton-image" />
-          </div>
-        </div>
-
         <!-- Empty state -->
-        <div v-else-if="featuredProjects.length === 0" class="featured-empty">
+        <div v-if="featuredProjects.length === 0" class="featured-empty">
           <Icon name="lucide:image" class="empty-icon" />
           <p>No featured projects yet. Check back soon!</p>
           <NuxtLink to="/projects" class="btn btn-outline-orange">
@@ -241,17 +220,8 @@ function getReadTime(article: ArticleListItem): string {
           <p class="section-subtitle">Thoughts, tutorials, and behind-the-scenes chaos</p>
         </div>
 
-        <!-- Loading state -->
-        <div v-if="isLoadingArticles" class="blog-grid">
-          <div v-for="i in 3" :key="i" class="blog-card blog-skeleton">
-            <div class="skeleton-tag" />
-            <div class="skeleton-title" />
-            <div class="skeleton-title skeleton-title-short" />
-          </div>
-        </div>
-
         <!-- Empty state -->
-        <div v-else-if="featuredArticles.length === 0" class="blog-empty">
+        <div v-if="featuredArticles.length === 0" class="blog-empty">
           <Icon name="lucide:file-text" class="empty-icon" />
           <p>No articles yet. Check back soon!</p>
         </div>
@@ -713,30 +683,6 @@ function getReadTime(article: ArticleListItem): string {
   color: var(--muted-foreground);
 }
 
-// Skeleton loading state
-.project-skeleton {
-  background-color: var(--card);
-  border: 2px solid var(--border);
-}
-
-.skeleton-image {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    var(--muted) 0%,
-    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
-    var(--muted) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
 // Empty state
 .featured-empty {
   display: flex;
@@ -902,44 +848,6 @@ function getReadTime(article: ArticleListItem): string {
 .blog-footer {
   margin-top: 3rem;
   text-align: center;
-}
-
-// Blog skeleton loading state
-.blog-skeleton {
-  pointer-events: none;
-}
-
-.skeleton-tag {
-  width: 5rem;
-  height: 1.5rem;
-  background: linear-gradient(
-    90deg,
-    var(--muted) 0%,
-    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
-    var(--muted) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-  border-radius: 0.25rem;
-}
-
-.skeleton-title {
-  width: 100%;
-  height: 1.5rem;
-  margin-top: 1rem;
-  background: linear-gradient(
-    90deg,
-    var(--muted) 0%,
-    color-mix(in srgb, var(--muted) 50%, var(--card)) 50%,
-    var(--muted) 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s ease-in-out infinite;
-  border-radius: 0.25rem;
-}
-
-.skeleton-title-short {
-  width: 60%;
 }
 
 // Blog empty state

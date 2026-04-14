@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import Badge from '~/components/ui/Badge.vue'
-import Skeleton from '~/components/ui/Skeleton.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
 import type { Project as ApiProject } from '~/types/api'
@@ -62,34 +61,14 @@ const { user, showAuthModal, initialized, fetchUser } = useAuth()
 const route = useRoute()
 const id = (route.params.id as string) || '1'
 
-const project = ref<DisplayProject | null>(null)
-const isLoading = ref(true)
-const error = ref<string | null>(null)
-const isLiked = ref(false)
-const likes = ref(0)
-const isLiking = ref(false)
-
-onMounted(async () => {
-  isLoading.value = true
-  error.value = null
-  
-  try {
-    const result = await getProject(id)
-    
-    if (result) {
-      project.value = transformProject(result)
-      likes.value = project.value.likes
-      isLiked.value = project.value.isLiked
-    } else {
-      error.value = 'not_found'
-    }
-  } catch (e: any) {
-    console.error('Failed to fetch project:', e)
-    error.value = e.message || 'error'
-  } finally {
-    isLoading.value = false
-  }
+const { data: project, error } = await useAsyncData(`project-${id}`, async () => {
+  const result = await getProject(id)
+  return result ? transformProject(result) : null
 })
+
+const isLiked = ref(project.value?.isLiked || false)
+const likes = ref(project.value?.likes || 0)
+const isLiking = ref(false)
 
 async function handleLike() {
   if (!project.value) return
@@ -134,23 +113,19 @@ async function handleLike() {
 <template>
   <div :class="$style.page">
     <div :class="$style.container">
-      <!-- Loading State -->
-      <template v-if="isLoading">
-        <div :class="$style.loadingState">
-          <Skeleton variant="text" width="60%" height="2.5rem" />
-          <Skeleton variant="text" width="30%" height="1rem" :class="$style.loadingMeta" />
-          <Skeleton variant="image" height="400px" :class="$style.loadingImage" />
-          <Skeleton variant="text" :lines="4" :class="$style.loadingContent" />
-          <div :class="$style.loadingTags">
-            <Skeleton variant="rectangular" width="80px" height="24px" />
-            <Skeleton variant="rectangular" width="100px" height="24px" />
-            <Skeleton variant="rectangular" width="90px" height="24px" />
-          </div>
-        </div>
+      <!-- Error State -->
+      <template v-if="error">
+        <EmptyState
+          icon="lucide:alert-circle"
+          title="Something Went Wrong"
+          :description="error?.message || 'We couldn\'t load this project. Please try again later.'"
+          action-label="Go Back"
+          action-to="/projects"
+        />
       </template>
 
       <!-- Not Found State -->
-      <template v-else-if="error === 'not_found'">
+      <template v-else-if="!project">
         <EmptyState
           icon="lucide:folder-x"
           title="Project Not Found"
@@ -160,19 +135,8 @@ async function handleLike() {
         />
       </template>
 
-      <!-- Error State -->
-      <template v-else-if="error">
-        <EmptyState
-          icon="lucide:alert-circle"
-          title="Something Went Wrong"
-          description="We couldn't load this project. Please try again later."
-          action-label="Go Back"
-          action-to="/projects"
-        />
-      </template>
-
       <!-- Project Content -->
-      <template v-else-if="project">
+      <template v-else>
         <div :class="$style.projectSection">
           <div :class="$style.typeLabel">{{ typeLabels[project.type] || 'Project' }}</div>
           <h1 :class="$style.title">{{ project.title }}</h1>
@@ -228,28 +192,6 @@ async function handleLike() {
   max-width: 80rem;
   margin: 0 auto;
   padding: 1.5rem;
-}
-
-.loadingState {
-  padding: 2rem 0;
-}
-
-.loadingMeta {
-  margin-top: 0.75rem;
-}
-
-.loadingImage {
-  margin-top: 1.5rem;
-}
-
-.loadingContent {
-  margin-top: 1.5rem;
-}
-
-.loadingTags {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
 }
 
 .projectSection {

@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import Badge from '../../components/ui/Badge.vue'
 import Button from '../../components/ui/Button.vue'
-import Skeleton from '../../components/ui/Skeleton.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
 import type { ArticleListItem, Tag } from '~/types/api'
@@ -38,35 +37,26 @@ function transformArticle(article: ArticleListItem): DisplayArticle {
   }
 }
 
-const { getArticles, getTags, calculateReadTime } = useArticles()
+const { getArticles, getTags } = useArticles()
 
-const articles = ref<DisplayArticle[]>([])
-const allTags = ref<string[]>([])
 const selectedTags = ref<string[]>([])
-const isLoading = ref(true)
-const error = ref<string | null>(null)
 const router = useRouter()
 
-onMounted(async () => {
-  isLoading.value = true
-  error.value = null
-  
-  try {
-    // Fetch articles and tags in parallel
-    const [articlesResult, tagsResult] = await Promise.all([
-      getArticles(),
-      getTags(),
-    ])
-    
-    articles.value = articlesResult.articles.map(transformArticle)
-    allTags.value = tagsResult.map(t => t.name).sort()
-  } catch (e: any) {
-    console.error('Failed to fetch articles:', e)
-    error.value = e.message || 'Failed to load articles'
-  } finally {
-    isLoading.value = false
+const { data: blogData, error } = await useAsyncData('blog-list', async () => {
+  const [articlesResult, tagsResult] = await Promise.all([
+    getArticles(),
+    getTags(),
+  ])
+  return {
+    articles: articlesResult.articles.map(transformArticle),
+    tags: tagsResult.map(t => t.name).sort(),
   }
+}, {
+  default: () => ({ articles: [] as DisplayArticle[], tags: [] as string[] }),
 })
+
+const articles = computed(() => blogData.value.articles)
+const allTags = computed(() => blogData.value.tags)
 
 function toggleTag(tag: string) {
   selectedTags.value = selectedTags.value.includes(tag) ? selectedTags.value.filter((t) => t !== tag) : [...selectedTags.value, tag]
@@ -120,23 +110,10 @@ function openArticle(id: string) {
           v-if="error"
           icon="lucide:alert-circle"
           title="Failed to Load Articles"
-          :description="error"
+          :description="error?.message || 'Failed to load articles'"
           action-label="Try Again"
           @action="() => $router.go(0)"
         />
-
-        <!-- Loading State -->
-        <div v-else-if="isLoading" :class="$style.loadingGrid">
-          <div v-for="i in 6" :key="i" :class="$style.skeletonCard">
-            <Skeleton variant="image" height="200px" />
-            <Skeleton variant="text" width="80%" height="1.5rem" :class="$style.skeletonTitle" />
-            <Skeleton variant="text" :lines="2" />
-            <div :class="$style.skeletonMeta">
-              <Skeleton variant="rectangular" width="60px" height="20px" />
-              <Skeleton variant="rectangular" width="80px" height="20px" />
-            </div>
-          </div>
-        </div>
 
         <template v-else>
           <div v-if="firstArticle">
@@ -304,36 +281,6 @@ function openArticle(id: string) {
 .contentContainer {
   max-width: 80rem;
   margin: 0 auto;
-}
-
-.loadingGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: $breakpoint-lg) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.skeletonCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.skeletonTitle {
-  margin-top: 0.5rem;
-}
-
-.skeletonMeta {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
 }
 
 .emptyStateWrapper {
