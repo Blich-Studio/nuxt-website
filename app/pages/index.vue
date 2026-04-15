@@ -280,7 +280,7 @@ function getReadTime(article: ArticleListItem): string {
   width: 8rem;
   height: 8rem;
   border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-  background-color: oklch(0.52 0.12 35 / 0.2);
+  background-color: color-mix(in oklch, var(--clay-rust) 20%, transparent);
   filter: blur(40px);
 }
 
@@ -290,7 +290,7 @@ function getReadTime(article: ArticleListItem): string {
   width: 12rem;
   height: 12rem;
   border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  background-color: oklch(0.68 0.14 45 / 0.1);
+  background-color: color-mix(in oklch, var(--clay-orange) 10%, transparent);
   filter: blur(48px);
 }
 
@@ -321,7 +321,7 @@ function getReadTime(article: ArticleListItem): string {
   width: 16rem;
   height: 16rem;
   border-radius: 50%;
-  background-color: oklch(0.68 0.14 45 / 0.05);
+  background-color: color-mix(in oklch, var(--clay-orange) 5%, transparent);
   filter: blur(48px);
   transition: transform 0.1s ease-out;
   will-change: transform;
@@ -336,7 +336,7 @@ function getReadTime(article: ArticleListItem): string {
   width: 18rem;
   height: 18rem;
   border-radius: 50%;
-  background-color: oklch(0.52 0.12 35 / 0.05);
+  background-color: color-mix(in oklch, var(--clay-rust) 5%, transparent);
   filter: blur(48px);
   transition: transform 0.1s ease-out;
   will-change: transform;

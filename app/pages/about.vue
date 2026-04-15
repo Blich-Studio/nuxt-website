@@ -169,7 +169,7 @@ const teamMembers = [
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
-  background-color: oklch(0.68 0.14 45 / 0.15);
+  background-color: color-mix(in oklch, var(--clay-orange) 15%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -216,14 +216,14 @@ const teamMembers = [
   align-items: center;
   text-align: center;
   padding: 3rem 2rem;
-  background: linear-gradient(135deg, oklch(0.68 0.14 45 / 0.08), oklch(0.55 0.15 35 / 0.08));
+  background: linear-gradient(135deg, color-mix(in oklch, var(--clay-orange) 8%, transparent), color-mix(in oklch, var(--clay-rust) 8%, transparent));
   border: 2px dashed var(--clay-orange);
   border-radius: 1.5rem;
   transition: all 0.3s ease;
 
   &:hover {
     border-style: solid;
-    background: linear-gradient(135deg, oklch(0.68 0.14 45 / 0.12), oklch(0.55 0.15 35 / 0.12));
+    background: linear-gradient(135deg, color-mix(in oklch, var(--clay-orange) 12%, transparent), color-mix(in oklch, var(--clay-rust) 12%, transparent));
   }
 
   @media (min-width: $breakpoint-md) {
@@ -238,7 +238,7 @@ const teamMembers = [
   width: 6rem;
   height: 6rem;
   border-radius: 50%;
-  background-color: oklch(0.68 0.14 45 / 0.2);
+  background-color: color-mix(in oklch, var(--clay-orange) 20%, transparent);
   border: 2px dashed var(--clay-orange);
   display: flex;
   align-items: center;

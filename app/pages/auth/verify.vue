@@ -176,7 +176,7 @@ async function handleResend() {
   width: 8rem;
   height: 8rem;
   border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-  background-color: oklch(0.52 0.12 35 / 0.2);
+  background-color: color-mix(in oklch, var(--clay-rust) 20%, transparent);
   filter: blur(40px);
 }
 
@@ -186,7 +186,7 @@ async function handleResend() {
   width: 12rem;
   height: 12rem;
   border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  background-color: oklch(0.68 0.14 45 / 0.1);
+  background-color: color-mix(in oklch, var(--clay-orange) 10%, transparent);
   filter: blur(48px);
 }
 
