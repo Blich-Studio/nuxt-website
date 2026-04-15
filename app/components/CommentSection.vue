@@ -431,7 +431,7 @@ async function handleLikeComment(commentId: string, parentId?: string) {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
-  background-color: rgba(var(--sunset-orange-rgb, 200, 100, 50), 0.1);
+  background-color: color-mix(in oklch, var(--sunset-orange) 10%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;

@@ -163,7 +163,7 @@ const filteredProjects = computed(() => {
 
 .hero {
   padding: 5rem 1rem;
-  background: linear-gradient(to bottom, rgba(var(--sunset-sky-rgb, 100, 150, 200), 0.2), $color-background);
+  background: linear-gradient(to bottom, color-mix(in oklch, var(--sunset-sky) 20%, transparent), $color-background);
 }
 
 .heroContainer {
@@ -267,8 +267,8 @@ const filteredProjects = computed(() => {
   transition: all 0.3s ease;
 
   &:hover {
-    border-color: rgba(var(--sunset-orange-rgb, 200, 100, 50), 0.5);
-    box-shadow: 0 20px 25px -5px rgba(var(--sunset-orange-rgb, 200, 100, 50), 0.1);
+    border-color: color-mix(in oklch, var(--sunset-orange) 50%, transparent);
+    box-shadow: 0 20px 25px -5px color-mix(in oklch, var(--sunset-orange) 10%, transparent);
   }
 
   &:hover .projectImage {
@@ -301,7 +301,7 @@ const filteredProjects = computed(() => {
 }
 
 .typeBadge {
-  background-color: rgba(var(--sunset-orange-rgb, 200, 100, 50), 0.9);
+  background-color: color-mix(in oklch, var(--sunset-orange) 90%, transparent);
   color: white;
   border: none;
   text-transform: capitalize;
