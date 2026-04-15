@@ -6,7 +6,10 @@ import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
+import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { Article as ApiArticle } from '~/types/api'
+
+const tagAccent = useRandomItemAccent()
 
 interface DisplayArticle {
   id: string
@@ -178,7 +181,7 @@ watch(() => article.value?.content, async (content) => {
           <article :class="$style.articleCard">
             <!-- Tags -->
             <div :class="$style.tags">
-              <Badge v-for="tag in article.tags" :key="tag" variant="secondary">
+              <Badge v-for="tag in article.tags" :key="tag" variant="secondary" :style="tagAccent('article:' + tag)">
                 {{ tag }}
               </Badge>
             </div>

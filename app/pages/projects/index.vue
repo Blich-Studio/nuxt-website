@@ -4,7 +4,10 @@ import Button from '../../components/ui/Button.vue'
 import Badge from '../../components/ui/Badge.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
+import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ProjectListItem } from '~/types/api'
+
+const tagAccent = useRandomItemAccent()
 
 // Display format for projects
 interface DisplayProject {
@@ -130,7 +133,7 @@ const filteredProjects = computed(() => {
                 <h3 :class="$style.projectTitle">{{ project.title }}</h3>
                 <p :class="$style.projectDescription">{{ project.description }}</p>
                 <div :class="$style.projectTags">
-                  <Badge v-for="tag in project.tags.slice(0,3)" :key="tag" variant="secondary" :class="$style.tagSmall">{{ tag }}</Badge>
+                  <Badge v-for="tag in project.tags.slice(0,3)" :key="tag" variant="secondary" :class="$style.tagSmall" :style="tagAccent(project.id + ':' + tag)">{{ tag }}</Badge>
                 </div>
                 <div :class="$style.projectMeta">
                   <span>{{ project.likes }} likes</span>

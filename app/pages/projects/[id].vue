@@ -4,7 +4,10 @@ import { useRoute } from 'vue-router'
 import Badge from '~/components/ui/Badge.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
+import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { Project as ApiProject } from '~/types/api'
+
+const tagAccent = useRandomItemAccent()
 
 interface DisplayProject {
   id: string
@@ -170,7 +173,7 @@ async function handleLike() {
 
           <div :class="$style.tagsSection">
             <div :class="$style.tagsList">
-              <Badge v-for="tag in project.tags" :key="tag" variant="secondary">{{ tag }}</Badge>
+              <Badge v-for="tag in project.tags" :key="tag" variant="secondary" :style="tagAccent('detail:' + tag)">{{ tag }}</Badge>
             </div>
           </div>
         </div>

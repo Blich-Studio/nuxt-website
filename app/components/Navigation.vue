@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import Button from './ui/Button.vue'
+import { useRandomLetterColor, randomFamily, familyVar } from '~/composables/useRandomAccent'
+
+const letterColor = useRandomLetterColor()
 
 const scrollY = ref(0)
 const isMobileMenuOpen = ref(false)
@@ -37,10 +40,22 @@ const navLinks = [
   <nav :class="[$style.nav, isScrolled && $style.navScrolled, isMobileMenuOpen && $style.navMobileOpen]">
     <div :class="$style.container">
       <div :class="$style.inner">
-        <!-- Logo -->
+        <!-- Logo — each letter picks its own random family color per visit -->
         <NuxtLink to="/" :class="[$style.logo, showLogo && $style.logoVisible]">
-          <span :class="$style.logoText">BLICH</span>
-          <span :class="$style.logoAccent">STUDIO</span>
+          <span :class="$style.logoText">
+            <span
+              v-for="(ch, i) in 'BLICH'"
+              :key="'b' + i"
+              :style="{ color: letterColor(route.path + ':b:' + i) }"
+            >{{ ch }}</span>
+          </span>
+          <span :class="$style.logoAccent">
+            <span
+              v-for="(ch, i) in 'STUDIO'"
+              :key="'s' + i"
+              :style="{ color: letterColor(route.path + ':s:' + i) }"
+            >{{ ch }}</span>
+          </span>
         </NuxtLink>
 
         <!-- Desktop Navigation -->

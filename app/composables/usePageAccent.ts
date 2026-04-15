@@ -1,14 +1,15 @@
+import { applyRandomPageAccent } from './useRandomAccent'
+
 /**
- * usePageAccent — sets body[data-page] based on the current route.
+ * usePageAccent — sets body[data-page] based on the current route, then
+ * applies a random accent pair on every route change (client-only).
  *
- * Drives the chameleon-rotation accent system: CSS selectors in main.scss
- * match on `body[data-page='...']` and reassign --accent-primary/secondary
- * to different family colors per page type.
+ * Server-rendered HTML uses the deterministic body[data-page] rotation map
+ * defined in main.scss. Post-hydration on the client, we overwrite with a
+ * random family pair so the user "never knows what color they get" —
+ * chameleon-graffiti unpredictability within the curated family.
  *
- * Call once in the root layout/app entry — it updates reactively on
- * route change via useHead.
- *
- * See: _bmad-output/planning-artifacts/ux-design-specification.md
+ * Call once in the root layout/app entry.
  */
 export function usePageAccent() {
   const route = useRoute()
@@ -30,4 +31,15 @@ export function usePageAccent() {
       'data-page': pageKey,
     },
   })
+
+  // Client-only: randomize on initial mount and each route change.
+  if (import.meta.client) {
+    onMounted(() => {
+      applyRandomPageAccent()
+    })
+    watch(
+      () => route.fullPath,
+      () => applyRandomPageAccent(),
+    )
+  }
 }

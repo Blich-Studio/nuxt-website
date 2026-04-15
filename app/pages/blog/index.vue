@@ -4,7 +4,10 @@ import Badge from '../../components/ui/Badge.vue'
 import Button from '../../components/ui/Button.vue'
 import EmptyState from '../../components/ui/EmptyState.vue'
 import { useRouter } from 'vue-router'
+import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ArticleListItem, Tag } from '~/types/api'
+
+const tagAccent = useRandomItemAccent()
 
 // Transform API article to display format
 interface DisplayArticle {
@@ -127,7 +130,7 @@ function openArticle(id: string) {
                   <h2 :class="$style.featuredTitle">{{ firstArticle.title }}</h2>
                   <p :class="$style.featuredExcerpt">{{ firstArticle.excerpt }}</p>
                   <div :class="$style.featuredTags">
-                    <Badge v-for="tag in firstArticle.tags" :key="tag" variant="secondary" :class="$style.tagSmall">{{ tag }}</Badge>
+                    <Badge v-for="tag in firstArticle.tags" :key="tag" variant="secondary" :class="$style.tagSmall" :style="tagAccent('featured:' + firstArticle.id + ':' + tag)">{{ tag }}</Badge>
                   </div>
                   <div :class="$style.featuredMeta">
                     <div :class="$style.metaItem"><Icon name="lucide:calendar" :class="$style.metaIcon" /> {{ new Date(firstArticle.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</div>
@@ -147,7 +150,7 @@ function openArticle(id: string) {
                   <h3 :class="$style.articleTitle">{{ article.title }}</h3>
                   <p :class="$style.articleExcerpt">{{ article.excerpt }}</p>
                   <div :class="$style.articleTags">
-                    <Badge v-for="tag in article.tags.slice(0,2)" :key="tag" variant="secondary" :class="$style.tagSmall">{{ tag }}</Badge>
+                    <Badge v-for="tag in article.tags.slice(0,2)" :key="tag" variant="secondary" :class="$style.tagSmall" :style="tagAccent(article.id + ':' + tag)">{{ tag }}</Badge>
                   </div>
                   <div :class="$style.articleMeta">
                     <div :class="$style.metaItem"><Icon name="lucide:clock" :class="$style.metaIcon" /> {{ article.readTime }} min</div>
