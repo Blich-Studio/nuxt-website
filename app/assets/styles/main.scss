@@ -67,19 +67,18 @@
   --ring:                 var(--accent-primary);
   --radius:               0.25rem;
 
-  /* --- Legacy variable mapping (existing components rotate with the page) ---
-     Route legacy accent names through --accent-primary/secondary so components
-     referencing var(--clay-orange), var(--sunset-orange), etc. automatically
-     adopt each page's accent pair. Structural tones (beige, film-grain) stay
+  /* --- Legacy variable mapping (default — home values) ---
+     Legacy names are also redeclared in each body[data-page] block so they
+     rotate per page. Structural tones (beige, film-grain, sunset-sky) stay
      constant. */
-  --clay-orange:     var(--accent-primary);
-  --clay-rust:       var(--accent-secondary);
+  --clay-orange:     var(--family-magenta);
+  --clay-rust:       var(--family-cyan);
   --clay-deep:       var(--text);
   --clay-beige:      oklch(0.84 0.06 50);
-  --clay-terracotta: var(--accent-secondary);
+  --clay-terracotta: var(--family-cyan);
   --film-grain:      oklch(0.72 0.07 60);
-  --sunset-orange:   var(--accent-primary);
-  --sunset-deep:     var(--accent-secondary);
+  --sunset-orange:   var(--family-magenta);
+  --sunset-deep:     var(--family-cyan);
   --sunset-sky:      var(--family-cyan);
 
   /* Fonts */
@@ -98,7 +97,13 @@ body[data-page='home'] {
   --accent-primary-on:    var(--family-magenta-on);
   --accent-secondary:     var(--family-cyan);
   --accent-secondary-on:  var(--family-cyan-on);
-  --link:                 var(--accent-primary);
+  --link:                 var(--family-magenta);
+  /* Legacy aliases rotate with the page */
+  --clay-orange:          var(--family-magenta);
+  --sunset-orange:        var(--family-magenta);
+  --clay-rust:            var(--family-cyan);
+  --sunset-deep:          var(--family-cyan);
+  --clay-terracotta:      var(--family-cyan);
 }
 
 body[data-page='projects'] {
@@ -107,6 +112,11 @@ body[data-page='projects'] {
   --accent-secondary:     var(--family-marigold);
   --accent-secondary-on:  var(--family-marigold-on);
   --link:                 var(--family-oxblood); /* cyan too light for body links */
+  --clay-orange:          var(--family-cyan);
+  --sunset-orange:        var(--family-cyan);
+  --clay-rust:            var(--family-marigold);
+  --sunset-deep:          var(--family-marigold);
+  --clay-terracotta:      var(--family-marigold);
 }
 
 body[data-page='project-detail'] {
@@ -114,7 +124,12 @@ body[data-page='project-detail'] {
   --accent-primary-on:    var(--family-oxblood-on);
   --accent-secondary:     var(--family-lime);
   --accent-secondary-on:  var(--family-lime-on);
-  --link:                 var(--accent-primary);
+  --link:                 var(--family-oxblood);
+  --clay-orange:          var(--family-oxblood);
+  --sunset-orange:        var(--family-oxblood);
+  --clay-rust:            var(--family-lime);
+  --sunset-deep:          var(--family-lime);
+  --clay-terracotta:      var(--family-lime);
 }
 
 body[data-page='blog'] {
@@ -123,6 +138,11 @@ body[data-page='blog'] {
   --accent-secondary:     var(--family-magenta);
   --accent-secondary-on:  var(--family-magenta-on);
   --link:                 var(--family-oxblood); /* lime too light for body links */
+  --clay-orange:          var(--family-lime);
+  --sunset-orange:        var(--family-lime);
+  --clay-rust:            var(--family-magenta);
+  --sunset-deep:          var(--family-magenta);
+  --clay-terracotta:      var(--family-magenta);
 }
 
 body[data-page='blog-article'] {
@@ -131,6 +151,11 @@ body[data-page='blog-article'] {
   --accent-secondary:     var(--family-oxblood);
   --accent-secondary-on:  var(--family-oxblood-on);
   --link:                 var(--family-oxblood); /* marigold too light for body links */
+  --clay-orange:          var(--family-marigold);
+  --sunset-orange:        var(--family-marigold);
+  --clay-rust:            var(--family-oxblood);
+  --sunset-deep:          var(--family-oxblood);
+  --clay-terracotta:      var(--family-oxblood);
 }
 
 body[data-page='about'] {
@@ -139,6 +164,11 @@ body[data-page='about'] {
   --accent-secondary:     var(--family-oxblood);
   --accent-secondary-on:  var(--family-oxblood-on);
   --link:                 var(--family-oxblood);
+  --clay-orange:          var(--family-cyan);
+  --sunset-orange:        var(--family-cyan);
+  --clay-rust:            var(--family-oxblood);
+  --sunset-deep:          var(--family-oxblood);
+  --clay-terracotta:      var(--family-oxblood);
 }
 
 body[data-page='auth'] {
@@ -146,7 +176,12 @@ body[data-page='auth'] {
   --accent-primary-on:    var(--family-oxblood-on);
   --accent-secondary:     var(--family-oxblood);
   --accent-secondary-on:  var(--family-oxblood-on);
-  --link:                 var(--accent-primary);
+  --link:                 var(--family-oxblood);
+  --clay-orange:          var(--family-oxblood);
+  --sunset-orange:        var(--family-oxblood);
+  --clay-rust:            var(--family-oxblood);
+  --sunset-deep:          var(--family-oxblood);
+  --clay-terracotta:      var(--family-oxblood);
 }
 /* Note: 'error' page rotation requires an error.vue that sets data-page='error' explicitly.
    Add the body[data-page='error'] block when that page exists. */
