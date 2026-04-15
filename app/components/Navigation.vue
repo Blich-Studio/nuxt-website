@@ -150,7 +150,7 @@ const navLinks = [
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   // Light mode (default)
-  background-color: oklch(0.97 0.02 50 / 0.95);
+  background-color: color-mix(in oklch, var(--canvas) 95%, transparent);
 }
 
 :global(.dark) .navScrolled {

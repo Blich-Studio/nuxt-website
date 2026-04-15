@@ -7,47 +7,145 @@
    ======================================== */
 
 :root {
-  /* Light theme - warm desert sunset palette */
-  --background: oklch(0.97 0.02 50);
-  --foreground: oklch(0.2 0.03 40);
-  --card: oklch(0.99 0.01 60);
-  --card-foreground: oklch(0.2 0.03 40);
-  --popover: oklch(0.99 0.01 60);
-  --popover-foreground: oklch(0.2 0.03 40);
+  /* ============================================
+     LIGHT MODE — Chameleon rotation system
+     Lineage: Gorillaz × Old Prodigy × streetwear
+     See: _bmad-output/planning-artifacts/ux-design-specification.md
+     ============================================ */
 
-  /* Handmade clay/stop-motion inspired colors */
-  --clay-beige: oklch(0.85 0.08 60);
-  --clay-orange: oklch(0.68 0.14 45);
-  --clay-rust: oklch(0.55 0.15 35);
-  --clay-deep: oklch(0.35 0.08 25);
-  --clay-terracotta: oklch(0.58 0.12 40);
-  --film-grain: oklch(0.75 0.06 70);
+  /* --- Layer 1: Canvas + Reading set (stable, shared across all pages) --- */
+  --canvas:           oklch(0.94 0.02 30);     /* warm plaster off-white */
+  --canvas-card:      oklch(0.96 0.018 30);    /* cards */
+  --canvas-elevated:  oklch(0.97 0.015 30);    /* modals, popovers */
 
-  /* Sunset colors */
-  --sunset-orange: oklch(0.70 0.18 45);
-  --sunset-deep: oklch(0.58 0.16 38);
-  --sunset-sky: oklch(0.75 0.08 220);
+  --text:             oklch(0.18 0.04 30);     /* warm cocoa foreground */
+  --text-muted:       oklch(0.42 0.04 30);     /* secondary text */
 
-  --primary: var(--clay-rust);
-  --primary-foreground: oklch(0.99 0.01 60);
-  --secondary: oklch(0.92 0.02 55);
-  --secondary-foreground: oklch(0.2 0.03 40);
-  --muted: oklch(0.94 0.02 55);
-  --muted-foreground: oklch(0.45 0.03 40);
-  --accent: oklch(0.92 0.04 50);
-  --accent-foreground: oklch(0.2 0.03 40);
-  --destructive: oklch(0.55 0.18 25);
-  --destructive-foreground: oklch(0.99 0.01 60);
-  --border: oklch(0.88 0.02 55);
-  --input: oklch(0.88 0.02 55);
-  --ring: var(--clay-orange);
-  --radius: 0.25rem;
+  /* --- Layer 2: Accent family (5 vivids, each with paired on-text) --- */
+  --family-lime:        oklch(0.82 0.22 130);  /* Prodigy "Firestarter" */
+  --family-lime-on:     oklch(0.18 0.04 130);
+
+  --family-magenta:     oklch(0.62 0.25 0);    /* Plastic Beach pink */
+  --family-magenta-on:  oklch(0.97 0.015 0);
+
+  --family-cyan:        oklch(0.72 0.18 220);  /* Plastic Beach teal */
+  --family-cyan-on:     oklch(0.18 0.04 220);
+
+  --family-oxblood:     oklch(0.42 0.20 25);   /* Demon Days red */
+  --family-oxblood-on:  oklch(0.97 0.015 25);
+
+  --family-marigold:    oklch(0.76 0.18 65);   /* Humanz/Prodigy orange */
+  --family-marigold-on: oklch(0.18 0.04 65);
+
+  /* --- Layer 3: Semantic accent assignment (default = home: magenta+cyan) --- */
+  --accent-primary:       var(--family-magenta);
+  --accent-primary-on:    var(--family-magenta-on);
+  --accent-secondary:     var(--family-cyan);
+  --accent-secondary-on:  var(--family-cyan-on);
+  --link:                 var(--accent-primary);
+
+  /* --- Structural tokens (mapped to new architecture) --- */
+  --background:           var(--canvas);
+  --foreground:           var(--text);
+  --card:                 var(--canvas-card);
+  --card-foreground:      var(--text);
+  --popover:              var(--canvas-elevated);
+  --popover-foreground:   var(--text);
+
+  --primary:              var(--accent-primary);
+  --primary-foreground:   var(--accent-primary-on);
+  --secondary:            oklch(0.90 0.025 30);
+  --secondary-foreground: var(--text);
+  --muted:                oklch(0.92 0.02 30);
+  --muted-foreground:     var(--text-muted);
+  --accent:               oklch(0.90 0.04 30);
+  --accent-foreground:    var(--text);
+  --destructive:          oklch(0.55 0.18 25);    /* error red — unchanged per spec */
+  --destructive-foreground: oklch(0.97 0.015 25);
+  --border:               oklch(0.84 0.04 30);
+  --input:                oklch(0.84 0.04 30);
+  --ring:                 var(--accent-primary);
+  --radius:               0.25rem;
+
+  /* --- Legacy variable mapping (existing components work unchanged) --- */
+  --clay-orange:     var(--family-magenta);
+  --clay-rust:       var(--family-oxblood);
+  --clay-deep:       var(--text);
+  --clay-beige:      oklch(0.84 0.06 50);
+  --clay-terracotta: var(--family-oxblood);
+  --film-grain:      oklch(0.72 0.07 60);
+  --sunset-orange:   var(--family-magenta);
+  --sunset-deep:     var(--family-oxblood);
+  --sunset-sky:      var(--family-cyan);
 
   /* Fonts */
   --font-display: "Space Grotesk", "Geist", sans-serif;
   --font-body: "Inter", "Geist", sans-serif;
   --font-mono: "JetBrains Mono", "Geist Mono", monospace;
 }
+
+/* ============================================
+   Per-page accent rotation — the chameleon
+   Applied via body[data-page='...'] set by usePageAccent() composable
+   ============================================ */
+
+body[data-page='home'] {
+  --accent-primary:       var(--family-magenta);
+  --accent-primary-on:    var(--family-magenta-on);
+  --accent-secondary:     var(--family-cyan);
+  --accent-secondary-on:  var(--family-cyan-on);
+  --link:                 var(--accent-primary);
+}
+
+body[data-page='projects'] {
+  --accent-primary:       var(--family-cyan);
+  --accent-primary-on:    var(--family-cyan-on);
+  --accent-secondary:     var(--family-marigold);
+  --accent-secondary-on:  var(--family-marigold-on);
+  --link:                 var(--family-oxblood); /* cyan too light for body links */
+}
+
+body[data-page='project-detail'] {
+  --accent-primary:       var(--family-oxblood);
+  --accent-primary-on:    var(--family-oxblood-on);
+  --accent-secondary:     var(--family-lime);
+  --accent-secondary-on:  var(--family-lime-on);
+  --link:                 var(--accent-primary);
+}
+
+body[data-page='blog'] {
+  --accent-primary:       var(--family-lime);
+  --accent-primary-on:    var(--family-lime-on);
+  --accent-secondary:     var(--family-magenta);
+  --accent-secondary-on:  var(--family-magenta-on);
+  --link:                 var(--family-oxblood); /* lime too light for body links */
+}
+
+body[data-page='blog-article'] {
+  --accent-primary:       var(--family-marigold);
+  --accent-primary-on:    var(--family-marigold-on);
+  --accent-secondary:     var(--family-oxblood);
+  --accent-secondary-on:  var(--family-oxblood-on);
+  --link:                 var(--family-oxblood); /* marigold too light for body links */
+}
+
+body[data-page='about'] {
+  --accent-primary:       var(--family-cyan);
+  --accent-primary-on:    var(--family-cyan-on);
+  --accent-secondary:     var(--family-oxblood);
+  --accent-secondary-on:  var(--family-oxblood-on);
+  --link:                 var(--family-oxblood);
+}
+
+body[data-page='auth'] {
+  --accent-primary:       var(--family-oxblood);
+  --accent-primary-on:    var(--family-oxblood-on);
+  --accent-secondary:     var(--family-oxblood);
+  --accent-secondary-on:  var(--family-oxblood-on);
+  --link:                 var(--accent-primary);
+}
+/* Note: 'error' page rotation requires an error.vue that sets data-page='error' explicitly.
+   Add the body[data-page='error'] block when that page exists. */
 
 .dark {
   /* Dark theme - clay and earth tones */
@@ -163,3 +261,19 @@ body::before {
 .animate-float { animation: float 8s ease-in-out infinite; }
 .animate-wiggle { animation: wiggle 4s ease-in-out infinite; }
 .animate-drift { animation: drift 12s ease-in-out infinite; }
+
+/* ========================================
+   REDUCED MOTION
+   Honors prefers-reduced-motion: reduce
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+  }
+}

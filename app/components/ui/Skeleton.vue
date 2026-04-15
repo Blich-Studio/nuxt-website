@@ -36,9 +36,9 @@ withDefaults(defineProps<Props>(), {
 .skeleton {
   background: linear-gradient(
     90deg,
-    oklch(0.85 0.01 80) 25%,
-    oklch(0.90 0.01 80) 50%,
-    oklch(0.85 0.01 80) 75%
+    var(--border) 25%,
+    var(--canvas-card) 50%,
+    var(--border) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;

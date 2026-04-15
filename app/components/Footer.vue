@@ -85,8 +85,8 @@ const currentYear = new Date().getFullYear()
 
 .footer {
   border-top: 1px solid $color-border;
-  // Light mode: warm cream card color with 50% opacity
-  background-color: oklch(0.99 0.01 60 / 0.5);
+  // Light mode: canvas-card at 50% opacity
+  background-color: color-mix(in oklch, var(--canvas-card) 50%, transparent);
 }
 
 :global(.dark) .footer {

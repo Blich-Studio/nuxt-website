@@ -212,8 +212,8 @@ function openArticle(id: string) {
   border-bottom: 1px solid $color-border;
   position: sticky;
   top: 4rem;
-  // Light mode: cream/beige background matching the page
-  background-color: oklch(0.97 0.02 50 / 0.95);
+  // Light mode: canvas tone at 95% opacity
+  background-color: color-mix(in oklch, var(--canvas) 95%, transparent);
   backdrop-filter: blur(12px);
   z-index: 40;
 
