@@ -1,19 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import Button from './ui/Button.vue'
 
-const isScrolled = ref(false)
-const showLogo = ref(false)
+const scrollY = ref(0)
 const isMobileMenuOpen = ref(false)
 const route = useRoute()
+
+const isScrolled = computed(() => scrollY.value > 50)
+// Hide logo only on homepage until past hero; always show on other pages.
+const showLogo = computed(() => route.path !== '/' || scrollY.value > 400)
 
 // Composables are auto-imported in Nuxt
 const { user, signOut, showAuthModal } = useAuth()
 
 onMounted(() => {
   const handleScroll = () => {
-    isScrolled.value = window.scrollY > 50
-    showLogo.value = window.scrollY > 400
+    scrollY.value = window.scrollY
   }
   window.addEventListener('scroll', handleScroll)
   handleScroll() // Initial check
