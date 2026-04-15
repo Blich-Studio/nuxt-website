@@ -67,15 +67,19 @@
   --ring:                 var(--accent-primary);
   --radius:               0.25rem;
 
-  /* --- Legacy variable mapping (existing components work unchanged) --- */
-  --clay-orange:     var(--family-magenta);
-  --clay-rust:       var(--family-oxblood);
+  /* --- Legacy variable mapping (existing components rotate with the page) ---
+     Route legacy accent names through --accent-primary/secondary so components
+     referencing var(--clay-orange), var(--sunset-orange), etc. automatically
+     adopt each page's accent pair. Structural tones (beige, film-grain) stay
+     constant. */
+  --clay-orange:     var(--accent-primary);
+  --clay-rust:       var(--accent-secondary);
   --clay-deep:       var(--text);
   --clay-beige:      oklch(0.84 0.06 50);
-  --clay-terracotta: var(--family-oxblood);
+  --clay-terracotta: var(--accent-secondary);
   --film-grain:      oklch(0.72 0.07 60);
-  --sunset-orange:   var(--family-magenta);
-  --sunset-deep:     var(--family-oxblood);
+  --sunset-orange:   var(--accent-primary);
+  --sunset-deep:     var(--accent-secondary);
   --sunset-sky:      var(--family-cyan);
 
   /* Fonts */
