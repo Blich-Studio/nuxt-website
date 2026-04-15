@@ -58,10 +58,6 @@ const emit = defineEmits<{
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
-
-  :global([data-theme='dark']) & {
-    background: oklch(0.25 0.02 50);
-  }
 }
 
 .icon {

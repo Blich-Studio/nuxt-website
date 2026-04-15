@@ -7,19 +7,10 @@ const showLogo = ref(false)
 const isMobileMenuOpen = ref(false)
 const route = useRoute()
 
-const theme = ref<'light' | 'dark'>('dark')
-
 // Composables are auto-imported in Nuxt
 const { user, signOut, showAuthModal } = useAuth()
 
 onMounted(() => {
-  // Check saved theme
-  const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null
-  if (savedTheme) {
-    theme.value = savedTheme
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark')
-  }
-
   const handleScroll = () => {
     isScrolled.value = window.scrollY > 50
     showLogo.value = window.scrollY > 400
@@ -31,12 +22,6 @@ onMounted(() => {
     window.removeEventListener('scroll', handleScroll)
   })
 })
-
-function toggleTheme() {
-  theme.value = theme.value === 'dark' ? 'light' : 'dark'
-  localStorage.setItem('theme', theme.value)
-  document.documentElement.classList.toggle('dark', theme.value === 'dark')
-}
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -66,12 +51,6 @@ const navLinks = [
           >
             {{ link.label }}
           </NuxtLink>
-
-          <!-- Theme Toggle -->
-          <button type="button" @click="toggleTheme" :class="$style.themeToggle" aria-label="Toggle theme">
-            <Icon v-if="theme === 'dark'" name="lucide:sun" :class="$style.icon" />
-            <Icon v-else name="lucide:moon" :class="$style.icon" />
-          </button>
 
           <!-- Auth -->
           <template v-if="user && user.userId">
@@ -109,11 +88,6 @@ const navLinks = [
         >
           {{ link.label }}
         </NuxtLink>
-        <button type="button" @click="toggleTheme" :class="$style.mobileThemeToggle">
-          <Icon v-if="theme === 'dark'" name="lucide:sun" :class="$style.icon" />
-          <Icon v-else name="lucide:moon" :class="$style.icon" />
-          {{ theme === 'dark' ? 'Light Mode' : 'Dark Mode' }}
-        </button>
         <template v-if="user && user.userId">
           <div :class="$style.mobileGreeting">Hello, {{ user.name }}</div>
           <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="signOut">
@@ -149,19 +123,10 @@ const navLinks = [
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  // Light mode (default)
-  background-color: color-mix(in oklch, var(--canvas) 95%, transparent);
-}
-
-:global(.dark) .navScrolled {
-  background-color: oklch(0.12 0.015 280 / 0.95);
+  background-color: color-mix(in oklch, var(--background) 95%, transparent);
 }
 
 .navMobileOpen {
-  background-color: var(--background);
-}
-
-:global(.dark) .navMobileOpen {
   background-color: var(--background);
 }
 
@@ -242,24 +207,6 @@ const navLinks = [
   color: $color-clay-orange;
 }
 
-.themeToggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  border-radius: 50%;
-  border: 0px;
-  background: transparent;
-  color: $color-muted-foreground;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    color: $color-foreground;
-    border-color: $color-foreground;
-  }
-}
-
 .icon {
   width: 1rem;
   height: 1rem;
@@ -321,24 +268,6 @@ const navLinks = [
   font-weight: 500;
   color: $color-muted-foreground;
   transition: color 0.2s ease;
-}
-
-.mobileThemeToggle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 0;
-  font-size: $text-sm;
-  font-weight: 500;
-  color: $color-muted-foreground;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: $color-foreground;
-  }
 }
 
 .mobileGreeting {

@@ -43,16 +43,6 @@ withDefaults(defineProps<Props>(), {
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: $radius-sm;
-
-  :global([data-theme='dark']) & {
-    background: linear-gradient(
-      90deg,
-      oklch(0.18 0.005 280) 25%,
-      oklch(0.22 0.005 280) 50%,
-      oklch(0.18 0.005 280) 75%
-    );
-    background-size: 200% 100%;
-  }
 }
 
 @keyframes shimmer {

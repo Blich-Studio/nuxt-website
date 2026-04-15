@@ -39,7 +39,6 @@ export default defineNuxtConfig({
       ],
       htmlAttrs: {
         lang: 'en',
-        class: 'dark', // Start in dark mode like original
       },
     },
   },

@@ -193,19 +193,13 @@ const filteredProjects = computed(() => {
   border-bottom: 1px solid $color-border;
   position: sticky;
   top: 4rem;
-  // Light mode: canvas tone at 95% opacity
-  background-color: color-mix(in oklch, var(--canvas) 95%, transparent);
+  background-color: color-mix(in oklch, var(--background) 95%, transparent);
   backdrop-filter: blur(12px);
   z-index: 40;
 
   @media (min-width: $breakpoint-md) {
     top: 5rem;
   }
-}
-
-:global(.dark) .filterSection {
-  // Dark mode: dark background
-  background-color: oklch(0.12 0.015 280 / 0.95);
 }
 
 .filterContainer {

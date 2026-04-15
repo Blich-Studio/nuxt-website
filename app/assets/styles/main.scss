@@ -8,20 +8,39 @@
 
 :root {
   /* ============================================
-     LIGHT MODE — Chameleon rotation system
+     DARK-ONLY — Chameleon rotation system
      Lineage: Gorillaz × Old Prodigy × streetwear
      See: _bmad-output/planning-artifacts/ux-design-specification.md
      ============================================ */
 
-  /* --- Layer 1: Canvas + Reading set (stable, shared across all pages) --- */
-  --canvas:           oklch(0.94 0.02 30);     /* warm plaster off-white */
-  --canvas-card:      oklch(0.96 0.018 30);    /* cards */
-  --canvas-elevated:  oklch(0.97 0.015 30);    /* modals, popovers */
+  /* --- Structural tokens (dark canvas + reading set) --- */
+  --background:           oklch(0.12 0.015 280);
+  --foreground:           oklch(0.92 0.01 80);
+  --card:                 oklch(0.16 0.02 285);
+  --card-foreground:      oklch(0.92 0.01 80);
+  --popover:              oklch(0.14 0.02 280);
+  --popover-foreground:   oklch(0.92 0.01 80);
 
-  --text:             oklch(0.18 0.04 30);     /* warm cocoa foreground */
-  --text-muted:       oklch(0.42 0.04 30);     /* secondary text */
+  --secondary:            oklch(0.22 0.025 285);
+  --secondary-foreground: oklch(0.92 0.01 80);
+  --muted:                oklch(0.2 0.02 282);
+  --muted-foreground:     oklch(0.62 0.02 280);
+  --accent:               oklch(0.26 0.03 288);
+  --accent-foreground:    oklch(0.92 0.01 80);
+  --destructive:          oklch(0.55 0.18 25);
+  --destructive-foreground: oklch(0.92 0.01 80);
+  --border:               oklch(0.24 0.025 285);
+  --input:                oklch(0.24 0.025 285);
+  --radius:               0.25rem;
 
-  /* --- Layer 2: Accent family (5 vivids, each with paired on-text) --- */
+  /* --- Canvas aliases (semantic names used by newer components) --- */
+  --canvas:           var(--background);
+  --canvas-card:      var(--card);
+  --canvas-elevated:  var(--popover);
+  --text:             var(--foreground);
+  --text-muted:       var(--muted-foreground);
+
+  /* --- Accent family (5 vivids, each with paired on-text) --- */
   --family-lime:        oklch(0.82 0.22 130);  /* Prodigy "Firestarter" */
   --family-lime-on:     oklch(0.18 0.04 130);
 
@@ -37,49 +56,33 @@
   --family-marigold:    oklch(0.76 0.18 65);   /* Humanz/Prodigy orange */
   --family-marigold-on: oklch(0.18 0.04 65);
 
-  /* --- Layer 3: Semantic accent assignment (default = home: magenta+cyan) --- */
+  /* --- Semantic accent assignment (default = home: magenta+cyan) --- */
   --accent-primary:       var(--family-magenta);
   --accent-primary-on:    var(--family-magenta-on);
   --accent-secondary:     var(--family-cyan);
   --accent-secondary-on:  var(--family-cyan-on);
   --link:                 var(--accent-primary);
 
-  /* --- Structural tokens (mapped to new architecture) --- */
-  --background:           var(--canvas);
-  --foreground:           var(--text);
-  --card:                 var(--canvas-card);
-  --card-foreground:      var(--text);
-  --popover:              var(--canvas-elevated);
-  --popover-foreground:   var(--text);
+  /* --primary / --ring indirect through --clay-orange for dark-mode byte-identity.
+     --clay-orange still rotates per page (via body[data-page] blocks), so the
+     chameleon behavior is preserved, matching the pre-removal dark-mode cascade. */
+  --primary:              var(--clay-orange);
+  --primary-foreground:   oklch(0.12 0.015 280);
+  --ring:                 var(--clay-orange);
 
-  --primary:              var(--accent-primary);
-  --primary-foreground:   var(--accent-primary-on);
-  --secondary:            oklch(0.90 0.025 30);
-  --secondary-foreground: var(--text);
-  --muted:                oklch(0.92 0.02 30);
-  --muted-foreground:     var(--text-muted);
-  --accent:               oklch(0.90 0.04 30);
-  --accent-foreground:    var(--text);
-  --destructive:          oklch(0.55 0.18 25);    /* error red — unchanged per spec */
-  --destructive-foreground: oklch(0.97 0.015 25);
-  --border:               oklch(0.84 0.04 30);
-  --input:                oklch(0.84 0.04 30);
-  --ring:                 var(--accent-primary);
-  --radius:               0.25rem;
-
-  /* --- Legacy variable mapping (default — home values) ---
-     Legacy names are also redeclared in each body[data-page] block so they
-     rotate per page. Structural tones (beige, film-grain, sunset-sky) stay
-     constant. */
-  --clay-orange:     var(--family-magenta);
-  --clay-rust:       var(--family-cyan);
-  --clay-deep:       var(--text);
-  --clay-beige:      oklch(0.84 0.06 50);
-  --clay-terracotta: var(--family-cyan);
-  --film-grain:      oklch(0.72 0.07 60);
-  --sunset-orange:   var(--family-magenta);
-  --sunset-deep:     var(--family-cyan);
-  --sunset-sky:      var(--family-cyan);
+  /* --- Legacy variable mapping (dark defaults) ---
+     Legacy names are redeclared in each body[data-page] block so they
+     rotate per page. Values here are the dark-theme fallbacks for any
+     component that reaches them before a rotation applies. */
+  --clay-orange:     oklch(0.68 0.14 45);
+  --clay-rust:       oklch(0.52 0.12 35);
+  --clay-deep:       oklch(0.35 0.08 25);
+  --clay-beige:      oklch(0.78 0.06 60);
+  --clay-terracotta: oklch(0.58 0.12 40);
+  --film-grain:      oklch(0.88 0.03 70);
+  --sunset-orange:   oklch(0.70 0.18 45);
+  --sunset-deep:     oklch(0.58 0.16 38);
+  --sunset-sky:      oklch(0.75 0.08 220);
 
   /* Fonts */
   --font-display: "Space Grotesk", "Geist", sans-serif;
@@ -185,36 +188,6 @@ body[data-page='auth'] {
 }
 /* Note: 'error' page rotation requires an error.vue that sets data-page='error' explicitly.
    Add the body[data-page='error'] block when that page exists. */
-
-.dark {
-  /* Dark theme - clay and earth tones */
-  --background: oklch(0.12 0.015 280);
-  --foreground: oklch(0.92 0.01 80);
-  --card: oklch(0.16 0.02 285);
-  --card-foreground: oklch(0.92 0.01 80);
-  --popover: oklch(0.14 0.02 280);
-  --popover-foreground: oklch(0.92 0.01 80);
-
-  --clay-beige: oklch(0.78 0.06 60);
-  --clay-orange: oklch(0.68 0.14 45);
-  --clay-rust: oklch(0.52 0.12 35);
-  --clay-deep: oklch(0.35 0.08 25);
-  --film-grain: oklch(0.88 0.03 70);
-
-  --primary: var(--clay-orange);
-  --primary-foreground: oklch(0.12 0.015 280);
-  --secondary: oklch(0.22 0.025 285);
-  --secondary-foreground: oklch(0.92 0.01 80);
-  --muted: oklch(0.2 0.02 282);
-  --muted-foreground: oklch(0.62 0.02 280);
-  --accent: oklch(0.26 0.03 288);
-  --accent-foreground: oklch(0.92 0.01 80);
-  --destructive: oklch(0.55 0.18 25);
-  --destructive-foreground: oklch(0.92 0.01 80);
-  --border: oklch(0.24 0.025 285);
-  --input: oklch(0.24 0.025 285);
-  --ring: var(--clay-orange);
-}
 
 /* ========================================
    BASE STYLES
