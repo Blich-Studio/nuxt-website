@@ -1,5 +1,9 @@
 <svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
   <rect width="180" height="180" rx="24" fill="#121016"/>
-  <text x="50" y="122" text-anchor="middle" font-family="'Space Grotesk','Inter',Arial,sans-serif" font-weight="700" font-size="104" letter-spacing="-4" fill="#EBE5DC">B</text>
-  <text x="128" y="108" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="72" fill="#5DB4D4">✱</text>
+  <text x="28" y="128" font-family="'Space Grotesk','Inter',Arial,sans-serif" font-weight="700" font-size="116" letter-spacing="-4" fill="#EBE5DC">B</text>
+  <g transform="translate(130 96)" fill="#5DB4D4">
+    <rect x="-6" y="-40" width="12" height="80" rx="1"/>
+    <rect x="-6" y="-40" width="12" height="80" rx="1" transform="rotate(60)"/>
+    <rect x="-6" y="-40" width="12" height="80" rx="1" transform="rotate(120)"/>
+  </g>
 </svg>
