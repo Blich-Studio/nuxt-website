@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { marked } from 'marked'
 import { useRoute } from 'vue-router'
 import Badge from '~/components/ui/Badge.vue'
@@ -74,12 +74,15 @@ const { data: project, error } = await useAsyncData(`project-${id}`, async () =>
   return result ? transformProject(result) : null
 })
 
-const renderedDescription = ref('')
+useHead({ bodyAttrs: { class: 'project-detail' } })
 
-watch(() => project.value?.description, async (desc) => {
-  if (!desc) return
-  renderedDescription.value = await marked(desc)
-}, { immediate: true })
+const renderedDescription = computed(() =>
+  project.value?.description ? (marked.parse(project.value.description) as string) : ''
+)
+
+const renderedShortDescription = computed(() =>
+  project.value?.shortDescription ? (marked.parseInline(project.value.shortDescription) as string) : ''
+)
 
 const isLiked = ref(project.value?.isLiked || false)
 const likes = ref(project.value?.likes || 0)
@@ -156,7 +159,7 @@ async function handleLike() {
           <div :class="$style.typeLabel">{{ typeLabels[project.type] || 'Project' }}</div>
           <h1 :class="$style.title">{{ project.title }}</h1>
           <div :class="$style.meta">{{ new Date(project.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ likes }} likes</div>
-          <p v-if="project.shortDescription" :class="$style.shortDescription">{{ project.shortDescription }}</p>
+          <p v-if="project.shortDescription" :class="$style.shortDescription" v-html="renderedShortDescription" />
 
           <!-- Project Links -->
           <div v-if="project.githubUrl || project.itchioUrl || project.steamUrl || project.youtubeUrl" :class="$style.linksSection">
@@ -225,6 +228,11 @@ async function handleLike() {
 
 .page {
   min-height: 100vh;
+  padding-top: 4rem;
+
+  @media (min-width: $breakpoint-md) {
+    padding-top: 5rem;
+  }
 }
 
 .container {
