@@ -127,6 +127,16 @@ export interface LikeStatus {
 // Project types
 export type ProjectType = 'game' | 'engine' | 'tool' | 'animation' | 'artwork' | 'other'
 
+export interface LinkedArticle {
+  id: string
+  title: string
+  slug: string
+  perex?: string | null
+  coverImageUrl?: string | null
+  publishedAt?: string | null
+  readTime?: number
+}
+
 export interface Project {
   id: string
   title: string
@@ -147,6 +157,7 @@ export interface Project {
   likesCount: number
   viewsCount: number
   isLiked?: boolean
+  articles: LinkedArticle[]
   publishedAt: string | null
   createdAt: string
   updatedAt: string
