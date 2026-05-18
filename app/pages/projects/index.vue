@@ -8,6 +8,7 @@ import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ProjectListItem } from '~/types/api'
 
 const tagAccent = useRandomItemAccent()
+const archiveSignals = ['full index', 'games', 'motion', 'sound objects', 'visual work', 'process debris']
 
 // Display format for projects
 interface DisplayProject {
@@ -80,8 +81,13 @@ const filteredProjects = computed(() => {
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
         <p :class="$style.eyebrow">ARCHIVE / FULL INDEX</p>
-        <h1 :class="$style.heroTitle">Archive</h1>
+        <h1 :class="$style.heroTitle">Full index, playable things, visual noise.</h1>
         <p :class="$style.heroSubtitle">Games, animation, sound-adjacent experiments, visual work, and process objects from Blich Collective</p>
+        <div :class="$style.signalTags">
+          <span v-for="signal in archiveSignals" :key="signal" :style="tagAccent('archive:hero:' + signal)">
+            {{ signal }}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -192,7 +198,7 @@ const filteredProjects = computed(() => {
 
 .heroTitle {
   font-family: $font-display;
-  max-width: 12ch;
+  max-width: 11ch;
   font-size: clamp(4rem, 10vw, 8rem);
   font-weight: 700;
   line-height: 0.9;
@@ -209,6 +215,21 @@ const filteredProjects = computed(() => {
   max-width: 44rem;
   margin: 0;
   text-wrap: balance;
+}
+
+.signalTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+
+  span {
+    border: 1px solid currentColor;
+    padding: 0.35rem 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
 }
 
 .filterSection {
