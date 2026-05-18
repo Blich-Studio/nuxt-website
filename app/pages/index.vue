@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import type { ProjectListItem, ArticleListItem } from '~/types/api'
+import { computed } from 'vue'
+import type { ArticleListItem, ProjectListItem } from '~/types/api'
 
 const { getFeaturedProjects } = useProjects()
 const { getArticles } = useArticles()
+const itemAccent = useRandomItemAccent()
 
-const scrollY = ref(0)
-const mousePosition = ref({ x: 0, y: 0 })
+const streamUrl = ''
 
 const { data: featuredProjects } = await useAsyncData('home-featured-projects', () => getFeaturedProjects(4), {
   default: () => [] as ProjectListItem[],
@@ -17,881 +17,801 @@ const { data: articlesData } = await useAsyncData('home-featured-articles', () =
 })
 
 const featuredArticles = computed(() => articlesData.value.articles)
+const isLive = computed(() => streamUrl.length > 0)
 
-onMounted(() => {
-  const handleScroll = () => (scrollY.value = window.scrollY)
-  const handleMouseMove = (e: MouseEvent) => (mousePosition.value = { x: e.clientX, y: e.clientY })
+const signalTags = ['analog synths', 'drum machines', 'tribe', 'analog techno', 'handmade motion', 'artsy games']
 
-  window.addEventListener('scroll', handleScroll)
-  window.addEventListener('mousemove', handleMouseMove)
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('scroll', handleScroll)
-    window.removeEventListener('mousemove', handleMouseMove)
-  })
-})
-
-const logoScale = computed(() => Math.max(0.3, 1 - scrollY.value * 0.002))
-const logoY = computed(() => Math.min(scrollY.value * 0.8, 400))
-const logoOpacity = computed(() => Math.max(0, 1 - scrollY.value * 0.0025))
-
-const steps = [
-  { num: '01', title: 'Sculpt', desc: 'Every character starts as clay in our hands' },
-  { num: '02', title: 'Animate', desc: 'Frame by frame, bringing life to the lifeless' },
-  { num: '03', title: 'Polish', desc: 'Adding the digital magic that makes it pop' },
+const channels = [
+  {
+    title: 'Sound',
+    href: '/sound',
+    icon: 'lucide:radio',
+    kicker: 'machines / pressure / repetition',
+    description: 'Analog synth sketches, drum machine patterns, tribe and analog techno experiments, sound design fragments, and live set notes.',
+  },
+  {
+    title: 'Motion',
+    href: '/motion',
+    icon: 'lucide:scan-line',
+    kicker: 'drawn / filmed / assembled',
+    description: 'Hand-drawn animation, stop motion tests, loops, character studies, scanned marks, and frame-by-frame process.',
+  },
+  {
+    title: 'Play',
+    href: '/play',
+    icon: 'lucide:gamepad-2',
+    kicker: 'weird systems / playable art',
+    description: 'Small games, prototypes, mechanics, worlds, and interactive pieces that keep one foot in the sketchbook.',
+  },
 ]
 
-// Type labels for project types
 const typeLabels: Record<string, string> = {
-  game: 'GAME',
-  engine: 'ENGINE',
+  game: 'PLAY',
+  engine: 'SYSTEM',
   tool: 'TOOL',
-  animation: 'ANIMATION',
-  artwork: 'ARTWORK',
-  other: 'PROJECT',
+  animation: 'MOTION',
+  artwork: 'VISUAL',
+  other: 'WORK',
 }
 
-// Helper to get type display name
 function getProjectTag(project: ProjectListItem): string {
-  return typeLabels[project.type] || 'PROJECT'
+  return typeLabels[project.type] || 'WORK'
 }
 
-// Helper to get tag display name from article
 function getArticleTag(article: ArticleListItem): string {
-  return article.tags?.[0]?.name?.toUpperCase() || 'ARTICLE'
-}
-
-// Helper to format read time
-function getReadTime(article: ArticleListItem): string {
-  const minutes = article.readTime || 5
-  return `${minutes} min read`
+  return article.tags?.[0]?.name?.toUpperCase() || 'NOTE'
 }
 </script>
 
 <template>
   <div class="page">
-    <!-- Hero Section -->
-    <section class="hero-section">
-      <!-- Floating blobs -->
-      <div
-        class="blob blob-rust"
-        :style="{ transform: `translate(${mousePosition.x * 0.03}px, ${mousePosition.y * 0.03 - scrollY * 0.1}px)` }"
-      />
-      <div
-        class="blob blob-orange"
-        :style="{ transform: `translate(${mousePosition.x * -0.04}px, ${mousePosition.y * -0.04 - scrollY * 0.15}px)` }"
-      />
-      <div
-        class="blob blob-beige"
-        :style="{ transform: `translate(${mousePosition.x * 0.02}px, ${mousePosition.y * 0.02 - scrollY * 0.2}px)` }"
-      />
-      <div
-        class="blob blob-grain"
-        :style="{ transform: `translate(${mousePosition.x * -0.025}px, ${mousePosition.y * -0.025 - scrollY * 0.12}px)` }"
-      />
-
-      <div class="hero-content">
-        <div class="hero-inner">
-          <div
-            class="tagline"
-            :style="{ transform: `rotate(-1deg) translateY(${scrollY * 0.5}px)`, opacity: Math.max(0, 1 - scrollY * 0.004) }"
-          >
-            <span>EST. 2024 • STOP MOTION & GAMES</span>
-          </div>
-
-          <h1
-            class="hero-title"
-            :style="{ transform: `translateY(-${logoY}px) scale(${logoScale})`, opacity: logoOpacity }"
-          >
-            <span class="hero-title-main">BLICH</span>
-            <span class="hero-title-accent">
-              STUDIO
-              <span class="hero-star">✱</span>
-            </span>
+    <section class="hero">
+      <div class="hero-noise" />
+      <div class="marquee marquee-top" aria-hidden="true">
+        <span>NO MENU FOR NORMALITY / LIVE SIGNAL / ANALOG TECHNO / FRAME DAMAGE / PLAYABLE ART / </span>
+        <span>NO MENU FOR NORMALITY / LIVE SIGNAL / ANALOG TECHNO / FRAME DAMAGE / PLAYABLE ART / </span>
+      </div>
+      <div class="side-rail" aria-hidden="true">BLICH COLLECTIVE 2026 / PRAGUE / LOW FREQUENCY OBJECTS</div>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">BLICH COLLECTIVE / CURRENT SIGNAL</p>
+          <h1 class="hero-title" aria-label="Analog noise, handmade motion, weird games.">
+            <span aria-hidden="true">Analog</span>
+            <span aria-hidden="true">noise,</span>
+            <span aria-hidden="true">handmade</span>
+            <span aria-hidden="true">motion,</span>
+            <span aria-hidden="true">weird games.</span>
           </h1>
-
-          <p
-            class="hero-description"
-            :style="{ transform: `translateY(${scrollY * 0.3}px)`, opacity: Math.max(0, 1 - scrollY * 0.003) }"
-          >
-            We breathe life into clay, pixels, and code. Crafting tactile stop-motion animations and games with soul.
+          <p class="hero-text">
+            A living archive for sound system experiments, drawn and filmed animation, artsy indie games, and the notes that leak out between them.
           </p>
-
-          <div
-            class="hero-actions"
-            :style="{ transform: `translateY(${scrollY * 0.3}px)`, opacity: Math.max(0, 1 - scrollY * 0.003) }"
-          >
-            <NuxtLink to="/projects" class="btn btn-primary">
-              View Projects
-              <Icon name="lucide:arrow-right" class="btn-icon" />
+          <div class="hero-actions">
+            <NuxtLink to="/projects" class="button button-primary">
+              Archive
+              <Icon name="lucide:arrow-up-right" class="button-icon" />
             </NuxtLink>
-            <NuxtLink to="/blog" class="btn btn-outline">
-              Behind the Scenes
+            <NuxtLink to="/sound" class="button button-ghost">
+              Tune In
+              <Icon name="lucide:radio" class="button-icon" />
             </NuxtLink>
           </div>
         </div>
-      </div>
 
-      <div class="scroll-hint">SCROLL TO EXPLORE</div>
-    </section>
-
-    <!-- Featured Work Section -->
-    <section class="featured-section">
-      <div class="blob blob-featured" :style="{ transform: `translateY(${scrollY * 0.08}px)` }" />
-      <div class="container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">Featured <span class="accent">Work</span></h2>
-            <p class="section-subtitle">Where frames meet imagination. Each project is handcrafted with care and animated with love.</p>
+        <aside class="signal-board" aria-label="Blich signal status">
+          <p class="board-stamp">UNLICENSED MOOD</p>
+          <div class="signal-row">
+            <span>MODE</span>
+            <strong>COLLECTIVE</strong>
           </div>
-          <NuxtLink to="/projects" class="btn btn-outline-orange">
-            View All Projects <Icon name="lucide:arrow-right" class="btn-icon-sm" />
-          </NuxtLink>
-        </div>
+          <div class="signal-row">
+            <span>COLOR</span>
+            <strong>RANDOMIZED</strong>
+          </div>
+          <div class="signal-row">
+            <span>PARTY</span>
+            <strong>HIDDEN</strong>
+          </div>
+          <div class="meter" aria-hidden="true">
+            <span v-for="bar in 18" :key="bar" :style="{ '--delay': `${bar * 38}ms` }" />
+          </div>
+          <code>patch://blich/signal/random-color/live-slot-null</code>
+        </aside>
+      </div>
 
-        <!-- Empty state -->
-        <div v-if="featuredProjects.length === 0" class="featured-empty">
-          <Icon name="lucide:image" class="empty-icon" />
-          <p>No featured projects yet. Check back soon!</p>
-          <NuxtLink to="/projects" class="btn btn-outline-orange">
-            Browse All Projects
-          </NuxtLink>
-        </div>
-
-        <!-- Dynamic projects grid -->
-        <div v-else class="projects-grid">
-          <NuxtLink
-            v-for="(project, index) in featuredProjects"
-            :key="project.id"
-            :to="`/projects/${project.slug}`"
-            class="project-card"
-            :class="{ 'project-card-large': index === 0 || index === 3 }"
-          >
-            <img
-              :src="project.coverImageUrl || '/placeholder.svg'"
-              :alt="project.title"
-              class="project-image"
-            />
-            <div class="project-overlay" />
-            <div class="project-content" :class="{ 'project-content-sm': index !== 0 && index !== 3 }">
-              <div class="project-tag" :class="['tag-orange', 'tag-beige', 'tag-rust', 'tag-grain'][index % 4]">
-                {{ getProjectTag(project) }}
-              </div>
-              <h3 :class="index === 0 || index === 3 ? 'project-title-lg' : 'project-title'">
-                {{ project.title }}
-              </h3>
-              <p v-if="(index === 0 || index === 3) && project.shortDescription" class="project-desc">
-                {{ project.shortDescription }}
-              </p>
-            </div>
-          </NuxtLink>
-        </div>
+      <div class="tag-strip" aria-label="Creative disciplines">
+        <span v-for="tag in signalTags" :key="tag" :style="itemAccent('signal:' + tag)">{{ tag }}</span>
+      </div>
+      <div class="marquee marquee-bottom" aria-hidden="true">
+        <span>FIELD NOTES / PARTY HIDDEN / SYNTH TABLE / STOP MOTION / BROKEN UI AS A FEATURE / </span>
+        <span>FIELD NOTES / PARTY HIDDEN / SYNTH TABLE / STOP MOTION / BROKEN UI AS A FEATURE / </span>
       </div>
     </section>
 
-    <!-- Made by Hand Section -->
-    <section class="hand-section">
-      <div class="blob blob-hand" :style="{ transform: `translateY(${scrollY * -0.05}px)` }" />
-      <div class="container container-narrow">
-        <div class="hand-header">
-          <Icon name="lucide:hand-metal" class="hand-icon" />
-          <h2 class="section-title">Made by <span class="accent">Hand</span></h2>
-          <p class="section-subtitle-center">No AI. No shortcuts. Just craft.</p>
-        </div>
-
-        <div class="steps-container">
-          <div v-for="step in steps" :key="step.num" class="step">
-            <span class="step-number">{{ step.num }}</span>
-            <div>
-              <h3 class="step-title">{{ step.title }}</h3>
-              <p class="step-desc">{{ step.desc }}</p>
-            </div>
+    <section class="section live-section">
+      <div class="section-head">
+        <p class="eyebrow">LIVE SIGNAL</p>
+        <h2>Broadcast-ready, even when the room is quiet.</h2>
+      </div>
+      <div class="live-grid">
+        <div class="live-player" :class="{ 'is-live': isLive }">
+          <div class="scanline" aria-hidden="true" />
+          <div class="live-status">
+            <span class="status-dot" />
+            {{ isLive ? 'ON AIR' : 'OFFLINE / PATCHING' }}
+          </div>
+          <audio v-if="isLive" :src="streamUrl" controls />
+          <div v-else class="offline-panel">
+            <Icon name="lucide:radio-receiver" class="offline-icon" />
+            <p>Future slot for live analog sets, production sessions, animation desk streams, or party transmissions.</p>
           </div>
         </div>
+        <div class="live-copy">
+          <p>
+            The site can host a real stream later: Owncast, YouTube Live, Twitch, Icecast, or AzuraCast. For now the section is designed into the page so the live layer has a home when you are ready to plug it in.
+          </p>
+          <NuxtLink to="/sound" class="text-link">
+            Sound archive <Icon name="lucide:arrow-right" />
+          </NuxtLink>
+        </div>
       </div>
     </section>
 
-    <!-- Blog Section -->
-    <section class="blog-section">
-      <div class="blob blob-blog" :style="{ transform: `translateY(${scrollY * 0.06}px)` }" />
-      <div class="container">
-        <div class="blog-header">
-          <h2 class="section-title">From the <span class="accent">Studio</span></h2>
-          <p class="section-subtitle">Thoughts, tutorials, and behind-the-scenes chaos</p>
-        </div>
+    <section class="section channel-section">
+      <div class="section-head">
+        <p class="eyebrow">CHANNELS</p>
+        <h2>One collective, several forms of noise.</h2>
+      </div>
+      <div class="channel-grid">
+        <NuxtLink v-for="channel in channels" :key="channel.title" :to="channel.href" class="channel-card">
+          <Icon :name="channel.icon" class="channel-icon" />
+          <p class="channel-kicker">{{ channel.kicker }}</p>
+          <h3>{{ channel.title }}</h3>
+          <p>{{ channel.description }}</p>
+          <span class="corner-code">0{{ channels.indexOf(channel) + 1 }}</span>
+        </NuxtLink>
+      </div>
+    </section>
 
-        <!-- Empty state -->
-        <div v-if="featuredArticles.length === 0" class="blog-empty">
-          <Icon name="lucide:file-text" class="empty-icon" />
-          <p>No articles yet. Check back soon!</p>
+    <section class="section archive-section">
+      <div class="section-head section-head-row">
+        <div>
+          <p class="eyebrow">ARCHIVE</p>
+          <h2>Recent work from the desk, screen, and floor.</h2>
         </div>
+        <NuxtLink to="/projects" class="text-link">
+          Full archive <Icon name="lucide:arrow-right" />
+        </NuxtLink>
+      </div>
 
-        <!-- Dynamic articles grid -->
-        <div v-else class="blog-grid">
-          <NuxtLink v-for="article in featuredArticles" :key="article.id" :to="`/blog/${article.slug}`" class="blog-card">
-            <div class="blog-card-header">
-              <span class="blog-tag">{{ getArticleTag(article) }}</span>
-              <span class="blog-time">{{ getReadTime(article) }}</span>
-            </div>
-            <h3 class="blog-title">{{ article.title }}</h3>
-            <Icon name="lucide:arrow-right" class="blog-arrow" />
-          </NuxtLink>
-        </div>
+      <div v-if="featuredProjects.length === 0" class="empty-state">
+        <Icon name="lucide:folder-open" />
+        <p>No archive entries published yet.</p>
+      </div>
 
-        <div class="blog-footer">
-          <NuxtLink to="/blog" class="btn btn-outline">
-            All Articles <Icon name="lucide:arrow-right" class="btn-icon-sm" />
-          </NuxtLink>
+      <div v-else class="work-grid">
+        <NuxtLink v-for="project in featuredProjects" :key="project.id" :to="`/projects/${project.slug}`" class="work-card">
+          <img :src="project.coverImageUrl || '/placeholder.svg'" :alt="project.title" />
+          <div class="work-card-content">
+            <span :style="itemAccent('project:' + project.id)">{{ getProjectTag(project) }}</span>
+            <h3>{{ project.title }}</h3>
+            <p v-if="project.shortDescription">{{ project.shortDescription }}</p>
+          </div>
+        </NuxtLink>
+      </div>
+    </section>
+
+    <section class="section notes-section">
+      <div class="section-head section-head-row">
+        <div>
+          <p class="eyebrow">NOTES</p>
+          <h2>Devlogs, sound logs, process scraps.</h2>
         </div>
+        <NuxtLink to="/blog" class="text-link">
+          All notes <Icon name="lucide:arrow-right" />
+        </NuxtLink>
+      </div>
+
+      <div v-if="featuredArticles.length === 0" class="empty-state">
+        <Icon name="lucide:notebook-text" />
+        <p>No notes published yet.</p>
+      </div>
+
+      <div v-else class="notes-grid">
+        <NuxtLink v-for="article in featuredArticles" :key="article.id" :to="`/blog/${article.slug}`" class="note-card">
+          <span :style="itemAccent('article:' + article.id)">{{ getArticleTag(article) }}</span>
+          <h3>{{ article.title }}</h3>
+          <p>{{ article.perex }}</p>
+        </NuxtLink>
       </div>
     </section>
   </div>
 </template>
 
 <style lang="scss" scoped>
-// Page
 .page {
   min-height: 100vh;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    var(--background);
 }
 
-// ============================
-// Hero Section
-// ============================
-.hero-section {
+.hero {
   position: relative;
   min-height: 100vh;
+  padding: 9rem 1rem 6.5rem;
   display: flex;
-  align-items: center;
-  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+  background:
+    linear-gradient(90deg, color-mix(in oklch, var(--accent-primary) 20%, transparent) 0 12%, transparent 12% 100%),
+    repeating-linear-gradient(0deg, transparent 0 22px, color-mix(in oklch, var(--foreground) 6%, transparent) 22px 23px),
+    linear-gradient(300deg, color-mix(in oklch, var(--accent-secondary) 22%, transparent), transparent 46%),
+    var(--background);
 }
 
-// Blobs
-.blob {
+.hero::before {
+  content: '';
   position: absolute;
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  inset: 0;
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--foreground) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--foreground) 8%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+  pointer-events: none;
 }
 
-.blob-rust {
-  top: 5rem;
-  right: 10%;
-  width: 8rem;
-  height: 8rem;
-  border-radius: 40% 60% 70% 30% / 40% 50% 60% 50%;
-  background-color: color-mix(in oklch, var(--clay-rust) 20%, transparent);
-  filter: blur(40px);
-}
-
-.blob-orange {
-  top: 10rem;
-  left: 15%;
-  width: 12rem;
-  height: 12rem;
-  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
-  background-color: color-mix(in oklch, var(--clay-orange) 10%, transparent);
-  filter: blur(48px);
-}
-
-.blob-beige {
-  bottom: 8rem;
-  right: 20%;
-  width: 10rem;
-  height: 10rem;
-  border-radius: 30% 70% 70% 30% / 30% 60% 40% 70%;
-  background-color: oklch(0.78 0.06 60 / 0.15);
-  filter: blur(40px);
-}
-
-.blob-grain {
-  top: 50%;
-  left: 5%;
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  background-color: oklch(0.88 0.03 70 / 0.1);
-  filter: blur(24px);
-}
-
-.blob-featured {
+.hero-noise {
   position: absolute;
-  top: 2.5rem;
-  right: 2.5rem;
-  width: 16rem;
-  height: 16rem;
-  border-radius: 50%;
-  background-color: color-mix(in oklch, var(--clay-orange) 5%, transparent);
-  filter: blur(48px);
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  inset: 0;
+  opacity: 0.32;
+  background-image:
+    radial-gradient(circle at 20% 30%, var(--accent-primary) 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, var(--accent-secondary) 0 1px, transparent 1px);
+  background-size: 7px 7px, 11px 11px;
+  mix-blend-mode: difference;
+  pointer-events: none;
 }
 
-.blob-hand {
+.marquee {
   position: absolute;
-  bottom: 5rem;
-  left: 2.5rem;
-  width: 18rem;
-  height: 18rem;
-  border-radius: 50%;
-  background-color: color-mix(in oklch, var(--clay-rust) 5%, transparent);
-  filter: blur(48px);
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
-}
-
-.blob-blog {
-  position: absolute;
-  top: 50%;
+  left: 0;
   right: 0;
-  width: 24rem;
-  height: 24rem;
-  border-radius: 50%;
-  background-color: oklch(0.78 0.06 60 / 0.05);
-  filter: blur(48px);
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-  transform: translateZ(0);
-  backface-visibility: hidden;
+  display: flex;
+  overflow: hidden;
+  border-block: 2px solid var(--accent-primary);
+  background: var(--accent-primary);
+  color: var(--accent-primary-on);
+  font-family: var(--font-mono);
+  font-weight: 800;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  z-index: 2;
 }
 
-// Hero content
-.hero-content {
-  max-width: 80rem;
+.marquee span {
+  min-width: max-content;
+  padding: 0.4rem 0;
+  animation: crawl 18s linear infinite;
+}
+
+.marquee-top {
+  top: 5rem;
+  transform: rotate(-1deg) scaleX(1.02);
+}
+
+.marquee-bottom {
+  bottom: 1.25rem;
+  transform: rotate(1deg) scaleX(1.02);
+  background: var(--accent-secondary);
+  color: var(--accent-secondary-on);
+  border-color: var(--accent-secondary);
+}
+
+.side-rail {
+  position: absolute;
+  left: 0.35rem;
+  top: 9rem;
+  writing-mode: vertical-rl;
+  color: var(--accent-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0;
+  z-index: 2;
+}
+
+.hero-grid {
+  width: min(100%, 80rem);
   margin: 0 auto;
-  padding: 5rem 1rem;
+  display: grid;
+  gap: 2rem;
+  align-items: end;
   position: relative;
-  z-index: 10;
-}
+  z-index: 1;
 
-.hero-inner {
-  max-width: 56rem;
-}
-
-.tagline {
-  display: inline-block;
-  margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  border: 2px solid color-mix(in srgb, var(--clay-orange) 30%, transparent);
-  background-color: color-mix(in srgb, var(--clay-orange) 5%, transparent);
-  transition: all 0.2s ease;
-
-  span {
-    color: var(--clay-orange);
-    font-family: var(--font-mono);
-    font-size: 0.875rem;
-    letter-spacing: 0.05em;
+  @media (min-width: 900px) {
+    grid-template-columns: minmax(0, 1fr) 22rem;
   }
 }
 
-.hero-title {
-  font-family: var(--font-display);
-  font-size: clamp(4.5rem, 12vw, 9rem);
-  font-weight: 700;
-  margin-bottom: 2rem;
-  line-height: 0.9;
-  letter-spacing: -0.05em;
-  transition: all 0.2s ease;
-  transform-origin: top left;
+.hero-copy h1 {
+  max-width: 13ch;
+  font-size: clamp(3.6rem, 10vw, 9.5rem);
+  line-height: 0.78;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  filter: drop-shadow(0.08em 0.08em 0 color-mix(in oklch, var(--accent-secondary) 72%, transparent));
 }
 
-.hero-title-main {
+.hero-title span {
   display: block;
-  color: var(--foreground);
+  width: fit-content;
 }
 
-.hero-title-accent {
-  display: block;
-  color: var(--clay-orange);
-  position: relative;
+.hero-title span:nth-child(2) {
+  color: var(--accent-primary);
+  transform: translateX(0.35em) rotate(-2deg);
 }
 
-.hero-star {
-  position: absolute;
-  right: -3rem;
-  top: -1.5rem;
-  font-size: 2.5rem;
-  animation: wiggle 4s ease-in-out infinite;
+.hero-title span:nth-child(3) {
+  -webkit-text-stroke: 2px var(--foreground);
+  color: transparent;
 }
 
-.hero-description {
+.hero-title span:nth-child(4) {
+  transform: translateX(0.75em);
+}
+
+.hero-title span:nth-child(5) {
+  background: var(--accent-secondary);
+  color: var(--accent-secondary-on);
+  padding: 0 0.1em 0.06em;
+  transform: rotate(1.5deg);
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+  text-transform: uppercase;
+}
+
+.hero-text {
+  max-width: 44rem;
+  margin: 2rem 0 0;
+  color: color-mix(in oklch, var(--foreground) 86%, var(--muted-foreground));
   font-size: clamp(1.125rem, 2vw, 1.5rem);
-  color: var(--muted-foreground);
-  margin-bottom: 2rem;
-  max-width: 42rem;
-  line-height: 1.7;
-  border-left: 4px solid var(--clay-rust);
-  padding-left: 1.5rem;
-  transition: all 0.2s ease;
+  border-left: 0.75rem solid var(--accent-primary);
+  padding-left: 1rem;
+  background: color-mix(in oklch, var(--background) 74%, transparent);
 }
 
 .hero-actions {
   display: flex;
-  gap: 1rem;
+  gap: 0.75rem;
   flex-wrap: wrap;
-  align-items: center;
-  transition: all 0.2s ease;
+  margin-top: 2rem;
 }
 
-.scroll-hint {
-  position: absolute;
-  bottom: 3rem;
-  left: 2rem;
-  color: color-mix(in srgb, var(--clay-beige) 40%, transparent);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  transform: rotate(-90deg);
-  transform-origin: left center;
-}
-
-// ============================
-// Buttons
-// ============================
-.btn {
+.button,
+.text-link {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  font-weight: 700;
-  font-size: 0.875rem;
-  border-radius: 0.375rem;
-  transition: all 0.2s ease;
-  text-decoration: none;
+  font-weight: 800;
 }
 
-.btn-primary {
-  background-color: var(--clay-orange);
-  color: var(--background);
-
-  &:hover {
-    background-color: var(--clay-rust);
-  }
-
-  .btn-icon {
-    width: 1.25rem;
-    height: 1.25rem;
-    transition: transform 0.2s ease;
-  }
-
-  &:hover .btn-icon {
-    transform: translateX(4px);
-  }
+.button {
+  min-height: 2.875rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--accent-primary);
+  text-transform: uppercase;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  transform: skew(-8deg);
+  box-shadow: 0.35rem 0.35rem 0 color-mix(in oklch, var(--accent-secondary) 80%, transparent);
 }
 
-.btn-outline {
-  background-color: transparent;
-  border: 2px solid color-mix(in srgb, var(--clay-beige) 30%, transparent);
+.button > * {
+  transform: skew(8deg);
+}
+
+.button-primary {
+  color: var(--accent-primary-on);
+  background: var(--accent-primary);
+}
+
+.button-ghost {
   color: var(--foreground);
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--clay-beige) 5%, transparent);
-  }
+  background: color-mix(in oklch, var(--background) 72%, transparent);
 }
 
-.btn-outline-orange {
-  background-color: transparent;
-  border: 2px solid color-mix(in srgb, var(--clay-orange) 30%, transparent);
-  color: var(--foreground);
-
-  &:hover {
-    background-color: color-mix(in srgb, var(--clay-orange) 10%, transparent);
-  }
-}
-
-.btn-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-}
-
-.btn-icon-sm {
+.button-icon,
+.text-link svg {
   width: 1rem;
   height: 1rem;
-  margin-left: 0.5rem;
 }
 
-// ============================
-// Featured Section
-// ============================
-.featured-section {
-  padding: 8rem 1rem;
+.signal-board {
+  border: 2px solid color-mix(in oklch, var(--foreground) 22%, transparent);
+  background:
+    linear-gradient(135deg, color-mix(in oklch, var(--accent-secondary) 18%, transparent) 0 18%, transparent 18%),
+    color-mix(in oklch, var(--background) 80%, transparent);
+  backdrop-filter: blur(12px);
+  padding: 1rem;
+  transform: rotate(2deg);
+  box-shadow: -0.5rem 0.5rem 0 var(--accent-primary);
   position: relative;
-  overflow: hidden;
 }
 
-.container {
-  max-width: 80rem;
-  margin: 0 auto;
-  position: relative;
-  z-index: 10;
+.board-stamp {
+  display: inline-block;
+  margin: 0 0 1rem;
+  padding: 0.25rem 0.4rem;
+  border: 2px solid var(--accent-secondary);
+  color: var(--accent-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  transform: rotate(-6deg);
 }
 
-.container-narrow {
-  max-width: 72rem;
-}
-
-.section-header {
-  margin-bottom: 4rem;
+.signal-row {
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 2rem;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--foreground) 16%, transparent);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
 }
 
-.section-title {
-  font-family: var(--font-display);
-  font-size: clamp(3rem, 6vw, 4.5rem);
-  font-weight: 700;
-  margin-bottom: 1rem;
-}
-
-.accent {
-  color: var(--clay-orange);
-}
-
-.section-subtitle {
+.signal-board code {
+  display: block;
+  margin-top: 1rem;
   color: var(--muted-foreground);
-  font-size: 1.125rem;
-  max-width: 36rem;
+  font-size: 0.7rem;
+  word-break: break-all;
 }
 
-.section-subtitle-center {
+.signal-row span {
   color: var(--muted-foreground);
-  font-size: 1.125rem;
 }
 
-// Projects Grid
-.projects-grid {
+.meter {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  grid-auto-rows: 280px;
+  grid-template-columns: repeat(18, 1fr);
+  gap: 0.25rem;
+  height: 6rem;
+  align-items: end;
+  margin-top: 1rem;
+}
 
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(12, 1fr);
+.meter span {
+  height: 20%;
+  background: var(--accent-primary);
+  animation: pulse 920ms infinite alternate;
+  animation-delay: var(--delay);
+}
+
+.tag-strip {
+  width: min(100%, 80rem);
+  margin: 5rem auto 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  position: relative;
+  z-index: 3;
+}
+
+.tag-strip span,
+.work-card-content span,
+.note-card span {
+  border: 1px solid currentColor;
+  padding: 0.35rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  transform: rotate(var(--tag-tilt, -1deg));
+}
+
+.section {
+  padding: 6rem 1rem;
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.5rem;
+  background: var(--accent-primary);
+  opacity: 0.8;
+}
+
+.section-head {
+  width: min(100%, 80rem);
+  margin: 0 auto 2rem;
+}
+
+.section-head h2 {
+  max-width: 14ch;
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  line-height: 0.95;
+}
+
+.section-head-row {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.live-grid,
+.channel-grid,
+.work-grid,
+.notes-grid {
+  width: min(100%, 80rem);
+  margin: 0 auto;
+}
+
+.live-grid {
+  display: grid;
+  gap: 1rem;
+
+  @media (min-width: 850px) {
+    grid-template-columns: 1.35fr 0.65fr;
   }
 }
 
-.project-card {
+.live-player,
+.live-copy,
+.channel-card,
+.note-card {
+  border: 2px solid color-mix(in oklch, var(--foreground) 22%, transparent);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--foreground) 5%, transparent) 0 1px, transparent 1px 16px),
+    var(--card);
+}
+
+.live-player {
+  min-height: 20rem;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
   position: relative;
   overflow: hidden;
-  background-color: var(--card);
-  border: 2px solid var(--border);
-  transition: all 0.5s ease;
-  display: block;
+  transform: rotate(-0.8deg);
+}
 
-  @media (min-width: 768px) {
-    grid-column: span 5;
-  }
+.scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0 8px, color-mix(in oklch, var(--accent-primary) 12%, transparent) 8px 10px);
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
 
-  &:hover {
-    border-color: color-mix(in srgb, var(--clay-orange) 50%, transparent);
-  }
+.live-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-mono);
+  color: var(--accent-primary);
+  font-size: 0.8rem;
+}
 
-  &:hover .project-image {
-    transform: scale(1.05);
+.status-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 1rem var(--accent-primary);
+}
+
+.offline-panel {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.offline-icon {
+  width: 4rem;
+  height: 4rem;
+  margin-bottom: 1rem;
+  color: var(--accent-secondary);
+}
+
+.live-copy {
+  padding: 1.25rem;
+  color: var(--muted-foreground);
+}
+
+.text-link {
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  font-size: 0.8rem;
+}
+
+.channel-grid,
+.notes-grid {
+  display: grid;
+  gap: 1rem;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-.project-card-large {
-  @media (min-width: 768px) {
-    grid-column: span 7;
-    grid-row: span 2;
+.channel-card,
+.note-card {
+  min-height: 18rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.channel-card:hover,
+.note-card:hover {
+  transform: translateY(-4px) rotate(-1.5deg);
+  border-color: var(--accent-primary);
+}
+
+.channel-card:nth-child(odd) {
+  transform: rotate(-1deg);
+}
+
+.channel-card:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.corner-code {
+  position: absolute;
+  right: 0.75rem;
+  top: 0.75rem;
+  color: color-mix(in oklch, var(--accent-primary) 62%, transparent);
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.channel-icon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--accent-secondary);
+}
+
+.channel-kicker,
+.note-card p,
+.work-card-content p {
+  color: var(--muted-foreground);
+}
+
+.channel-card h3,
+.note-card h3 {
+  font-size: 2rem;
+}
+
+.work-grid {
+  display: grid;
+  gap: 1rem;
+
+  @media (min-width: 760px) {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-.project-image {
+.work-card {
+  min-height: 24rem;
+  position: relative;
+  overflow: hidden;
+  background: var(--card);
+  border: 2px solid color-mix(in oklch, var(--foreground) 16%, transparent);
+  clip-path: polygon(0 0, 100% 0.75rem, calc(100% - 0.75rem) 100%, 0.5rem calc(100% - 0.25rem));
+}
+
+.work-card:first-child {
+  @media (min-width: 760px) {
+    grid-column: span 2;
+  }
+}
+
+.work-card img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.7s ease;
+  filter: contrast(1.15) saturate(0.85);
+  transition: transform 0.4s ease;
 }
 
-.project-overlay {
+.work-card:hover img {
+  transform: scale(1.04);
+}
+
+.work-card::after {
+  content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, var(--background), color-mix(in srgb, var(--background) 60%, transparent), transparent);
-  opacity: 0.9;
+  background:
+    repeating-linear-gradient(0deg, color-mix(in oklch, var(--foreground) 7%, transparent) 0 1px, transparent 1px 10px),
+    linear-gradient(to top, color-mix(in oklch, var(--background) 94%, transparent), transparent);
 }
 
-.project-content {
+.work-card-content {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 2rem;
+  inset: auto 0 0;
+  z-index: 1;
+  padding: 1rem;
 }
 
-.project-content-sm {
-  padding: 1.5rem;
+.work-card-content h3 {
+  margin-top: 1rem;
+  font-size: 1.65rem;
 }
 
-.project-tag {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  margin-bottom: 0.75rem;
-}
-
-.tag-orange {
-  background-color: color-mix(in srgb, var(--clay-orange) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--clay-orange) 30%, transparent);
-  color: var(--clay-orange);
-}
-
-.tag-beige {
-  background-color: color-mix(in srgb, var(--clay-beige) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--clay-beige) 30%, transparent);
-  color: var(--clay-beige);
-}
-
-.tag-rust {
-  background-color: color-mix(in srgb, var(--clay-rust) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--clay-rust) 30%, transparent);
-  color: var(--clay-rust);
-}
-
-.tag-grain {
-  background-color: color-mix(in srgb, var(--film-grain) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--film-grain) 30%, transparent);
-  color: var(--film-grain);
-}
-
-.project-title {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--foreground);
-}
-
-.project-title-lg {
-  font-family: var(--font-display);
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: var(--foreground);
-  margin-bottom: 0.5rem;
-}
-
-.project-desc {
-  color: var(--muted-foreground);
-}
-
-// Empty state
-.featured-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-  color: var(--muted-foreground);
-  gap: 1rem;
-}
-
-.empty-icon {
-  width: 3rem;
-  height: 3rem;
-  opacity: 0.5;
-}
-
-// ============================
-// Made by Hand Section
-// ============================
-.hand-section {
-  padding: 8rem 1rem;
-  background: linear-gradient(to bottom, var(--background), var(--card));
-  position: relative;
-  overflow: hidden;
-}
-
-.hand-header {
-  text-align: center;
-  margin-bottom: 5rem;
-}
-
-.hand-icon {
-  width: 3rem;
-  height: 3rem;
-  color: var(--clay-orange);
-  margin: 0 auto 1rem;
-}
-
-.steps-container {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-}
-
-.step {
-  display: flex;
-  gap: 2rem;
-  align-items: flex-start;
-  border-left: 4px solid color-mix(in srgb, var(--clay-orange) 30%, transparent);
-  padding-left: 2rem;
-  transition: border-color 0.3s ease;
-
-  &:hover {
-    border-color: var(--clay-orange);
-  }
-}
-
-.step-number {
-  font-family: var(--font-display);
-  font-size: 3.75rem;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--clay-orange) 20%, transparent);
-}
-
-.step-title {
-  font-family: var(--font-display);
-  font-size: 1.875rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.step-desc {
-  font-size: 1.25rem;
-  color: var(--muted-foreground);
-}
-
-// ============================
-// Blog Section
-// ============================
-.blog-section {
-  padding: 8rem 1rem;
-  position: relative;
-  overflow: hidden;
-}
-
-.blog-header {
-  margin-bottom: 4rem;
-}
-
-.blog-grid {
+.empty-state {
+  width: min(100%, 80rem);
+  margin: 0 auto;
+  padding: 3rem;
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-
-  @media (min-width: 768px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.blog-card {
-  display: flex;
-  flex-direction: column;
+  place-items: center;
   gap: 1rem;
-  padding: 2rem;
-  background-color: var(--card);
-  border: 2px solid var(--border);
-  transition: all 0.3s ease;
-  text-decoration: none;
-
-  &:hover {
-    border-color: color-mix(in srgb, var(--clay-orange) 50%, transparent);
-  }
-
-  &:hover .blog-title {
-    color: var(--clay-orange);
-  }
-
-  &:hover .blog-arrow {
-    color: var(--clay-orange);
-    transform: translateX(8px);
-  }
-}
-
-.blog-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.blog-tag {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--clay-orange);
-  border: 1px solid color-mix(in srgb, var(--clay-orange) 30%, transparent);
-  padding: 0.25rem 0.5rem;
-  background-color: color-mix(in srgb, var(--clay-orange) 5%, transparent);
-}
-
-.blog-time {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-}
-
-.blog-title {
-  font-family: var(--font-display);
-  font-size: 1.5rem;
-  font-weight: 700;
-  line-height: 1.25;
-  transition: color 0.3s ease;
-  color: var(--foreground);
-}
-
-.blog-arrow {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--muted-foreground);
-  transition: all 0.3s ease;
-}
-
-.blog-footer {
-  margin-top: 3rem;
-  text-align: center;
-}
-
-// Blog empty state
-.blog-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
   text-align: center;
   color: var(--muted-foreground);
-  gap: 1rem;
+  border: 2px dashed color-mix(in oklch, var(--foreground) 18%, transparent);
 }
 
-// ============================
-// Animations
-// ============================
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-20px);
-  }
+.empty-state svg {
+  width: 2rem;
+  height: 2rem;
 }
 
-@keyframes drift {
-  0%, 100% {
-    transform: translate(0, 0) rotate(0deg);
+@keyframes pulse {
+  from {
+    height: 18%;
+    background: var(--accent-primary);
   }
-  33% {
-    transform: translate(10px, -10px) rotate(2deg);
-  }
-  66% {
-    transform: translate(-10px, 10px) rotate(-2deg);
+  to {
+    height: 100%;
+    background: var(--accent-secondary);
   }
 }
 
-@keyframes wiggle {
-  0%, 100% {
-    transform: rotate(-2deg);
+@keyframes crawl {
+  from {
+    transform: translateX(0);
   }
-  50% {
-    transform: rotate(2deg);
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@media (max-width: 720px) {
+  .side-rail {
+    display: none;
+  }
+
+  .hero-title span:nth-child(2),
+  .hero-title span:nth-child(4),
+  .hero-title span:nth-child(5) {
+    transform: none;
+  }
+
+  .signal-board,
+  .live-player,
+  .channel-card:nth-child(odd),
+  .channel-card:nth-child(even) {
+    transform: none;
   }
 }
 </style>

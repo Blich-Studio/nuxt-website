@@ -79,8 +79,8 @@ const filteredProjects = computed(() => {
   <div :class="$style.page">
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
-        <h1 :class="$style.heroTitle">Our Projects</h1>
-        <p :class="$style.heroSubtitle">Explore our collection of games, animations, and interactive experiences</p>
+        <h1 :class="$style.heroTitle">Archive</h1>
+        <p :class="$style.heroSubtitle">Games, animation, sound-adjacent experiments, visual work, and process objects from Blich Collective</p>
       </div>
     </section>
 
@@ -93,7 +93,7 @@ const filteredProjects = computed(() => {
             @click="setFilter('all')"
           >
             <Icon name="lucide:sparkles" :class="$style.filterIcon" />
-            All Projects
+            Full Archive
           </Button>
           <Button 
             v-for="tag in allTags" 

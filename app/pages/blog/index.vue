@@ -82,8 +82,8 @@ function openArticle(id: string) {
   <div :class="$style.page">
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
-        <h1 :class="$style.heroTitle">Our Blog</h1>
-        <p :class="$style.heroSubtitle">Insights, tutorials, and behind-the-scenes stories from our creative journey</p>
+        <h1 :class="$style.heroTitle">Notes</h1>
+        <p :class="$style.heroSubtitle">Devlogs, sound logs, process scraps, release notes, and behind-the-scenes fragments from the collective</p>
       </div>
     </section>
 
@@ -91,7 +91,7 @@ function openArticle(id: string) {
       <div :class="$style.filterContainer">
         <div :class="$style.filterHeader">
           <Icon name="lucide:tag" :class="$style.filterIcon" />
-          <h2 :class="$style.filterTitle">Filter by Tags</h2>
+          <h2 :class="$style.filterTitle">Filter Notes</h2>
           <Button v-if="selectedTags.length > 0" variant="ghost" size="sm" :class="$style.clearButton" @click="clearFilters">Clear All</Button>
         </div>
         <div :class="$style.tagsList">

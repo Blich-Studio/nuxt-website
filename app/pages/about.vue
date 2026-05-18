@@ -1,90 +1,65 @@
 <script setup lang="ts">
-// About page - static content
-
-const teamMembers = [
-  {
-    name: 'Filip Černý',
-    role: 'Founder & Creative Director',
-    bio: 'With over 10 years in web and software development, Filip founded Blich Studio to bring handcrafted artistry to life. He loves drawing, painting and finding new creative way to express himself, if not found behind the desk you can find him on hikes, mountaineering or playing chess',
-    avatar: '/team/filip.jpg',
-  },
-  {
-    name: 'Bedřich Černý',
-    role: 'Happiness Officer',
-    bio: 'Bedřich specializes in stress relief and maintaining a positive atmosphere within the studio. And he loves to chew on cables and hide Filip\'s headphones. His passion for food and belly rubs is unmatched.',
-    avatar: '/team/bedrich.jpg',
-  },
-]
+const fields = ['analog sound', 'animation', 'visual art', 'indie games', 'live signal', 'party archive']
+const itemAccent = useRandomItemAccent()
 </script>
 
 <template>
   <div :class="$style.page">
-    <div :class="$style.container">
-      <h1 :class="$style.title">About Blich Studio</h1>
-      <div :class="$style.content">
-        <p>
-          We're a passionate indie studio specializing in stop motion animations and games with handmade animations.
-          Every frame is crafted with care, bringing tactile, authentic art to life.
-        </p>
-        <p>
-          Founded in 2024, Blich Studio brings together talented artists, animators, and developers who share a love
-          for the meticulous craft of stop motion and handcrafted animation.
-        </p>
-        <p>
-          Our mission is to create animations and games that celebrate the beauty of analog techniques in the digital
-          age, inspiring audiences with every carefully placed frame.
-        </p>
+    <section :class="$style.hero">
+      <p :class="$style.eyebrow">ABOUT / BLICH COLLECTIVE</p>
+      <h1 :class="$style.title">A small signal table for sound, motion, and play.</h1>
+      <p :class="$style.lead">
+        Blich Collective is an evolving creative archive for analog techno, machine rhythms, hand-drawn and stop motion animation, visual art, and artsy indie game development.
+      </p>
+      <div :class="$style.tags">
+        <span v-for="field in fields" :key="field" :style="itemAccent('about:' + field)">{{ field }}</span>
       </div>
+    </section>
 
-      <!-- Team Section -->
-      <section :class="$style.teamSection">
-        <h2 :class="$style.sectionTitle">Meet the Team</h2>
-        <p :class="$style.sectionDescription">
-          The talented people behind the magic, crafting every frame with passion and precision.
+    <section :class="$style.grid">
+      <article :class="$style.panel">
+        <span :class="$style.panelCode">01</span>
+        <h2>What It Is</h2>
+        <p>
+          A public-facing collective identity for releases, process notes, playable objects, animation fragments, sound sessions, and future event material.
         </p>
-        
-        <div :class="$style.teamGrid">
-          <div v-for="member in teamMembers" :key="member.name" :class="$style.teamCard">
-            <div :class="$style.avatarWrapper">
-              <div :class="$style.avatarPlaceholder">
-                <Icon name="lucide:user" :class="$style.avatarIcon" />
-              </div>
-            </div>
-            <div :class="$style.memberInfo">
-              <h3 :class="$style.memberName">{{ member.name }}</h3>
-              <span :class="$style.memberRole">{{ member.role }}</span>
-              <p :class="$style.memberBio">{{ member.bio }}</p>
-            </div>
-          </div>
-        </div>
+      </article>
 
-        <!-- Join Us Card -->
-        <div :class="$style.joinUsSection">
-          <div :class="$style.joinUsCard">
-            <div :class="$style.joinUsAvatar">
-              <Icon name="lucide:plus" :class="$style.joinUsIcon" />
-            </div>
-            <div :class="$style.joinUsContent">
-              <h3 :class="$style.joinUsTitle">Maybe You?</h3>
-              <p :class="$style.joinUsText">
-                We're always looking for passionate creators who share our love for handcrafted animation. 
-                If you think we'd be a great match, let's talk!
-              </p>
-              <div :class="$style.joinUsLinks">
-                <a href="mailto:filip@blichstudio.com" :class="$style.joinUsLink">
-                  <Icon name="lucide:mail" :class="$style.linkIcon" />
-                  filip@blichstudio.com
-                </a>
-                <a href="https://discord.gg/blichstudio" target="_blank" :class="$style.joinUsLink">
-                  <Icon name="simple-icons:discord" :class="$style.linkIcon" />
-                  Join our Discord
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-    </div>
+      <article :class="$style.panel">
+        <span :class="$style.panelCode">02</span>
+        <h2>What It Makes</h2>
+        <p>
+          Tracks, patches, loops, drawings, stop motion tests, game prototypes, interactive systems, and notes from the messy parts of making.
+        </p>
+      </article>
+
+      <article :class="$style.panel">
+        <span :class="$style.panelCode">03</span>
+        <h2>Where It Goes</h2>
+        <p>
+          The hidden party section can later become a place for flyers, live recordings, photos, invitations, and transmission logs.
+        </p>
+      </article>
+    </section>
+
+    <section :class="$style.contact">
+      <p :class="$style.eyebrow">CONTACT / COLLABORATION</p>
+      <h2>Send a signal.</h2>
+      <div :class="$style.links">
+        <a href="mailto:hello@blichstudio.com">
+          <Icon name="lucide:mail" />
+          hello@blichstudio.com
+        </a>
+        <NuxtLink to="/projects">
+          <Icon name="lucide:archive" />
+          Open Archive
+        </NuxtLink>
+        <NuxtLink to="/sound">
+          <Icon name="lucide:radio" />
+          Sound
+        </NuxtLink>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -93,223 +68,142 @@ const teamMembers = [
 
 .page {
   min-height: 100vh;
-  padding: 5rem 1rem;
+  padding: 9rem 1rem 5rem;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    linear-gradient(110deg, color-mix(in oklch, var(--accent-primary) 16%, transparent), transparent 34%),
+    var(--background);
 }
 
-.container {
-  max-width: 56rem;
+.hero,
+.grid,
+.contact {
+  width: min(100%, 80rem);
   margin: 0 auto;
 }
 
+.eyebrow {
+  margin: 0 0 1rem;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .title {
-  font-family: $font-display;
-  font-size: $text-5xl;
-  font-weight: 700;
-  margin-bottom: 1.5rem;
+  max-width: 12ch;
+  font-size: clamp(3.5rem, 9vw, 8rem);
+  line-height: 0.86;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  filter: drop-shadow(0.05em 0.05em 0 color-mix(in oklch, var(--accent-secondary) 72%, transparent));
 }
 
-.content {
+.lead {
+  max-width: 48rem;
+  margin: 2rem 0 0;
+  padding-left: 1rem;
+  border-left: 0.75rem solid var(--accent-primary);
+  color: color-mix(in oklch, var(--foreground) 86%, var(--muted-foreground));
+  font-size: 1.2rem;
+}
+
+.tags {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  color: $color-muted-foreground;
-  font-size: $text-lg;
-  line-height: 1.7;
-}
-
-.teamSection {
-  margin-top: 4rem;
-  padding-top: 4rem;
-  border-top: 1px solid var(--border);
-}
-
-.sectionTitle {
-  font-family: $font-display;
-  font-size: $text-3xl;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-}
-
-.sectionDescription {
-  color: $color-muted-foreground;
-  font-size: $text-lg;
-  margin-bottom: 2.5rem;
-}
-
-.teamGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.teamCard {
-  display: flex;
-  gap: 1.25rem;
-  padding: 1.5rem;
-  background-color: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: var(--clay-orange);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.avatarWrapper {
-  flex-shrink: 0;
-}
-
-.avatarPlaceholder {
-  width: 4rem;
-  height: 4rem;
-  border-radius: 50%;
-  background-color: color-mix(in oklch, var(--clay-orange) 15%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.avatarIcon {
-  width: 2rem;
-  height: 2rem;
-  color: var(--clay-orange);
-}
-
-.memberInfo {
-  display: flex;
-  flex-direction: column;
-}
-
-.memberName {
-  font-family: $font-display;
-  font-size: $text-lg;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.memberRole {
-  font-size: $text-sm;
-  color: var(--clay-orange);
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-}
-
-.memberBio {
-  font-size: $text-sm;
-  color: $color-muted-foreground;
-  line-height: 1.6;
-}
-
-.joinUsSection {
-  margin-top: 3rem;
-}
-
-.joinUsCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 3rem 2rem;
-  background: linear-gradient(135deg, color-mix(in oklch, var(--clay-orange) 8%, transparent), color-mix(in oklch, var(--clay-rust) 8%, transparent));
-  border: 2px dashed var(--clay-orange);
-  border-radius: 1.5rem;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-style: solid;
-    background: linear-gradient(135deg, color-mix(in oklch, var(--clay-orange) 12%, transparent), color-mix(in oklch, var(--clay-rust) 12%, transparent));
-  }
-
-  @media (min-width: $breakpoint-md) {
-    flex-direction: row;
-    text-align: left;
-    padding: 2.5rem;
-    gap: 2rem;
-  }
-}
-
-.joinUsAvatar {
-  width: 6rem;
-  height: 6rem;
-  border-radius: 50%;
-  background-color: color-mix(in oklch, var(--clay-orange) 20%, transparent);
-  border: 2px dashed var(--clay-orange);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-bottom: 1.5rem;
-
-  @media (min-width: $breakpoint-md) {
-    margin-bottom: 0;
-  }
-}
-
-.joinUsIcon {
-  width: 2.5rem;
-  height: 2.5rem;
-  color: var(--clay-orange);
-}
-
-.joinUsContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  @media (min-width: $breakpoint-md) {
-    align-items: flex-start;
-  }
-}
-
-.joinUsTitle {
-  font-family: $font-display;
-  font-size: $text-2xl;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--clay-orange);
-}
-
-.joinUsText {
-  font-size: $text-base;
-  color: $color-muted-foreground;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  max-width: 32rem;
-}
-
-.joinUsLinks {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-
-  @media (min-width: $breakpoint-sm) {
-    flex-direction: row;
-    gap: 1.5rem;
-  }
-}
-
-.joinUsLink {
-  display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
-  font-size: $text-sm;
-  font-weight: 500;
-  color: var(--foreground);
-  transition: color 0.2s ease;
+  margin-top: 2rem;
+}
 
-  &:hover {
-    color: var(--clay-orange);
+.tags span {
+  border: 1px solid currentColor;
+  padding: 0.35rem 0.55rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.grid {
+  display: grid;
+  gap: 1rem;
+  margin-top: 5rem;
+
+  @media (min-width: $breakpoint-md) {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-.linkIcon {
-  width: 1.25rem;
-  height: 1.25rem;
+.panel,
+.contact {
+  border: 2px solid color-mix(in oklch, var(--foreground) 18%, transparent);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--foreground) 5%, transparent) 0 1px, transparent 1px 16px),
+    color-mix(in oklch, var(--card) 88%, transparent);
+}
+
+.panel {
+  min-height: 18rem;
+  padding: 1.25rem;
+  position: relative;
+}
+
+.panel:nth-child(odd) {
+  transform: rotate(-1deg);
+}
+
+.panel:nth-child(even) {
+  transform: rotate(1deg);
+}
+
+.panelCode {
+  color: color-mix(in oklch, var(--accent-primary) 64%, transparent);
+  font-family: var(--font-display);
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.panel h2,
+.contact h2 {
+  margin-top: 2rem;
+  font-size: 2rem;
+  text-transform: uppercase;
+}
+
+.panel p,
+.contact p {
+  color: var(--muted-foreground);
+}
+
+.contact {
+  margin-top: 5rem;
+  padding: 1.5rem;
+  border-left: 0.75rem solid var(--accent-primary);
+  box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--accent-secondary) 70%, transparent);
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--accent-secondary);
+  color: var(--accent-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.links svg {
+  width: 1rem;
+  height: 1rem;
 }
 </style>

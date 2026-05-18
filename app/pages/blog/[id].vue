@@ -143,7 +143,7 @@ watch(() => article.value?.content, async (content) => {
           icon="lucide:alert-circle"
           title="Something Went Wrong"
           :description="error?.message || 'We couldn\'t load this article. Please try again later.'"
-          action-label="Back to Blog"
+          action-label="Back to Notes"
           action-to="/blog"
         />
       </div>
@@ -156,7 +156,7 @@ watch(() => article.value?.content, async (content) => {
           icon="lucide:file-x"
           title="Article Not Found"
           description="The article you're looking for doesn't exist or may have been removed."
-          action-label="Back to Blog"
+          action-label="Back to Notes"
           action-to="/blog"
         />
       </div>
@@ -175,7 +175,7 @@ watch(() => article.value?.content, async (content) => {
         <div :class="$style.articleContainer">
           <NuxtLink to="/blog" :class="$style.backButton">
             <Icon name="lucide:arrow-left" :class="$style.backIcon" />
-            Back to Blog
+            Back to Notes
           </NuxtLink>
 
           <article :class="$style.articleCard">
@@ -241,6 +241,9 @@ watch(() => article.value?.content, async (content) => {
 
 .page {
   min-height: 100vh;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    var(--background);
 }
 
 .notFound {
@@ -255,6 +258,7 @@ watch(() => article.value?.content, async (content) => {
   height: 50vh;
   overflow: hidden;
   background-color: var(--muted);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 2rem), 0 100%);
 }
 
 .heroImage {
@@ -289,9 +293,12 @@ watch(() => article.value?.content, async (content) => {
   padding: 0.5rem 1rem;
   margin-left: -1rem;
   font-size: $text-sm;
-  font-weight: 500;
-  color: var(--foreground);
-  border-radius: 0.375rem;
+  font-family: $font-mono;
+  font-weight: 800;
+  color: var(--accent-secondary);
+  border: 1px solid var(--accent-secondary);
+  border-radius: 0;
+  text-transform: uppercase;
   transition: all 0.2s ease;
 
   &:hover {
@@ -306,10 +313,14 @@ watch(() => article.value?.content, async (content) => {
 }
 
 .articleCard {
-  background-color: var(--card);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--foreground) 5%, transparent) 0 1px, transparent 1px 16px),
+    color-mix(in oklch, var(--card) 90%, transparent);
   backdrop-filter: blur(4px);
-  border-radius: 1rem;
-  border: 1px solid var(--border);
+  border-radius: 0;
+  border: 2px solid color-mix(in oklch, var(--foreground) 18%, transparent);
+  border-left: 0.75rem solid var(--accent-primary);
+  box-shadow: 0.5rem 0.5rem 0 color-mix(in oklch, var(--accent-secondary) 70%, transparent);
   padding: 2rem;
 
   @media (min-width: $breakpoint-md) {
@@ -326,10 +337,14 @@ watch(() => article.value?.content, async (content) => {
 
 .articleTitle {
   font-family: $font-display;
-  font-size: clamp(2rem, 5vw, $text-5xl);
+  font-size: clamp(3rem, 8vw, 6rem);
   font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0;
+  text-transform: uppercase;
   margin-bottom: 1.5rem;
   text-wrap: balance;
+  filter: drop-shadow(0.05em 0.05em 0 color-mix(in oklch, var(--accent-secondary) 72%, transparent));
 }
 
 .articleMeta {
@@ -341,7 +356,7 @@ watch(() => article.value?.content, async (content) => {
   color: $color-muted-foreground;
   margin-bottom: 2rem;
   padding-bottom: 2rem;
-  border-bottom: 1px solid $color-border;
+  border-bottom: 2px solid color-mix(in oklch, var(--accent-primary) 45%, transparent);
 }
 
 .authorInfo {

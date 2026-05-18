@@ -10,11 +10,10 @@ const currentYear = new Date().getFullYear()
         <div :class="$style.brand">
           <NuxtLink to="/" :class="$style.brandTitle">
             <span :class="$style.logoText">BLICH</span>
-            <span :class="$style.logoAccent">STUDIO</span>
+            <span :class="$style.logoAccent">COLLECTIVE</span>
           </NuxtLink>
           <p :class="$style.brandDescription">
-            Crafting stop motion animations and handmade games frame by frame. Where analog artistry meets digital
-            storytelling.
+            Analog sound, handmade motion, artsy indie games, visual experiments, and notes from the process.
           </p>
           <div :class="$style.socialLinks">
             <a href="https://x.com/BlichStudio" target="_blank" rel="noopener noreferrer" :class="$style.socialLink" aria-label="X (Twitter)">
@@ -50,13 +49,22 @@ const currentYear = new Date().getFullYear()
           <h4 :class="$style.linksTitle">Explore</h4>
           <ul :class="$style.linksList">
             <li>
-              <NuxtLink to="/projects" :class="$style.link">Projects</NuxtLink>
+              <NuxtLink to="/projects" :class="$style.link">Archive</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/blog" :class="$style.link">Blog</NuxtLink>
+              <NuxtLink to="/sound" :class="$style.link">Sound</NuxtLink>
             </li>
             <li>
-              <NuxtLink to="/about" :class="$style.link">About Us</NuxtLink>
+              <NuxtLink to="/motion" :class="$style.link">Motion</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/play" :class="$style.link">Play</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/blog" :class="$style.link">Notes</NuxtLink>
+            </li>
+            <li>
+              <NuxtLink to="/about" :class="$style.link">About</NuxtLink>
             </li>
           </ul>
         </div>
@@ -65,7 +73,7 @@ const currentYear = new Date().getFullYear()
         <div :class="$style.linksSection">
           <h4 :class="$style.linksTitle">Contact</h4>
           <ul :class="$style.linksList">
-            <li :class="$style.contactItem">filip@blichstudio.com</li>
+            <li :class="$style.contactItem">hello@blichstudio.com</li>
             <li :class="$style.contactItem">Press inquiries</li>
             <li :class="$style.contactItem">Collaborations</li>
             <li :class="$style.contactItem">Discord</li>
@@ -74,7 +82,7 @@ const currentYear = new Date().getFullYear()
       </div>
 
       <div :class="$style.copyright">
-        <p>&copy; {{ currentYear }} Blich Studio. All rights reserved.</p>
+        <p>&copy; {{ currentYear }} Blich Collective. All rights reserved.</p>
       </div>
     </div>
   </footer>
