@@ -8,6 +8,7 @@ import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ArticleListItem, Tag } from '~/types/api'
 
 const tagAccent = useRandomItemAccent()
+const noteSignals = ['devlogs', 'patch notes', 'sound logs', 'field notes', 'unfinished zones', 'making-of scraps']
 
 // Transform API article to display format
 interface DisplayArticle {
@@ -82,8 +83,14 @@ function openArticle(id: string) {
   <div :class="$style.page">
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
-        <h1 :class="$style.heroTitle">Our Blog</h1>
-        <p :class="$style.heroSubtitle">Insights, tutorials, and behind-the-scenes stories from our creative journey</p>
+        <p :class="$style.eyebrow">NOTES / FIELD LOG</p>
+        <h1 :class="$style.heroTitle">Notes from the table, before they dry.</h1>
+        <p :class="$style.heroSubtitle">Devlogs, patch notes, sound logs, making-of scraps, and small reports from unfinished zones.</p>
+        <div :class="$style.signalTags">
+          <span v-for="signal in noteSignals" :key="signal" :style="tagAccent('notes:hero:' + signal)">
+            {{ signal }}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -91,7 +98,7 @@ function openArticle(id: string) {
       <div :class="$style.filterContainer">
         <div :class="$style.filterHeader">
           <Icon name="lucide:tag" :class="$style.filterIcon" />
-          <h2 :class="$style.filterTitle">Filter by Tags</h2>
+          <h2 :class="$style.filterTitle">Filter Notes</h2>
           <Button v-if="selectedTags.length > 0" variant="ghost" size="sm" :class="$style.clearButton" @click="clearFilters">Clear All</Button>
         </div>
         <div :class="$style.tagsList">
@@ -184,30 +191,64 @@ function openArticle(id: string) {
 }
 
 .hero {
-  padding: 5rem 1rem;
-  background: linear-gradient(to bottom, color-mix(in oklch, var(--sunset-sky) 20%, transparent), $color-background);
+  padding: 8rem 1rem 5rem;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    linear-gradient(110deg, color-mix(in oklch, var(--accent-primary) 16%, transparent), transparent 34%),
+    $color-background;
+
+  @media (min-width: $breakpoint-md) {
+    padding-top: 9rem;
+  }
 }
 
 .heroContainer {
   max-width: 80rem;
   margin: 0 auto;
-  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+  text-transform: uppercase;
 }
 
 .heroTitle {
   font-family: $font-display;
-  font-size: clamp(3rem, 8vw, $text-7xl);
+  max-width: 11ch;
+  font-size: clamp(4rem, 10vw, 8rem);
   font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0;
   margin-bottom: 1.5rem;
   text-wrap: balance;
+  text-transform: uppercase;
+  filter: drop-shadow(0.05em 0.05em 0 color-mix(in oklch, var(--accent-secondary) 72%, transparent));
 }
 
 .heroSubtitle {
   font-size: $text-xl;
   color: $color-muted-foreground;
-  max-width: 48rem;
-  margin: 0 auto;
+  max-width: 44rem;
+  margin: 0;
   text-wrap: balance;
+}
+
+.signalTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+
+  span {
+    border: 1px solid currentColor;
+    padding: 0.35rem 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
 }
 
 .filterSection {

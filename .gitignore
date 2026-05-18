@@ -79,3 +79,4 @@ Desktop.ini
 
 # Terraform
 .terraform/
+terraform-modules/

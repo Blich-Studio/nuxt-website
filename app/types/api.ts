@@ -126,6 +126,40 @@ export interface LikeStatus {
 
 // Project types
 export type ProjectType = 'game' | 'engine' | 'tool' | 'animation' | 'artwork' | 'other'
+export type ProjectChannel = 'sound' | 'motion' | 'play'
+export type ProjectPlatform =
+  | 'soundcloud'
+  | 'youtube'
+  | 'dailymotion'
+  | 'vimeo'
+  | 'peertube'
+  | 'itchio'
+  | 'steam'
+  | 'internet_archive'
+  | 'github'
+  | 'codeberg'
+  | 'other'
+export type ProjectLicense =
+  | 'cc0-1.0'
+  | 'cc-by-4.0'
+  | 'cc-by-sa-4.0'
+  | 'cc-by-nc-4.0'
+  | 'cc-by-nc-sa-4.0'
+  | 'mit'
+  | 'apache-2.0'
+  | 'gpl-3.0'
+  | 'proprietary'
+  | 'other'
+
+export interface LinkedArticle {
+  id: string
+  title: string
+  slug: string
+  perex?: string | null
+  coverImageUrl?: string | null
+  publishedAt?: string | null
+  readTime?: number
+}
 
 export interface Project {
   id: string
@@ -136,6 +170,12 @@ export interface Project {
   shortDescription: string | null
   coverImageUrl: string | null
   galleryUrls: string[]
+  channel: ProjectChannel | null
+  platform: ProjectPlatform | null
+  externalUrl: string | null
+  embedUrl: string | null
+  license: ProjectLicense | null
+  archiveUrl: string | null
   githubUrl: string | null
   itchioUrl: string | null
   steamUrl: string | null
@@ -147,6 +187,7 @@ export interface Project {
   likesCount: number
   viewsCount: number
   isLiked?: boolean
+  articles: LinkedArticle[]
   publishedAt: string | null
   createdAt: string
   updatedAt: string
@@ -158,6 +199,7 @@ export interface ProjectListItem extends Omit<Project, 'description'> {}
 export interface ProjectFilters {
   status?: 'draft' | 'published' | 'archived'
   type?: ProjectType
+  channel?: ProjectChannel
   featured?: boolean
   tags?: string
   search?: string

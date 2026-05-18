@@ -12,21 +12,21 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Blich Studio | Stop Motion & Handmade Games',
+      title: 'Blich Collective | Sound, Motion & Play',
       meta: [
-        { name: 'description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
+        { name: 'description', content: 'Analog sound, handmade motion, artsy indie games, and process notes from Blich Collective.' },
         { name: 'theme-color', content: '#1E1A26' },
         { property: 'og:type', content: 'website' },
-        { property: 'og:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
-        { property: 'og:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
+        { property: 'og:title', content: 'Blich Collective | Sound, Motion & Play' },
+        { property: 'og:description', content: 'Analog sound, handmade motion, artsy indie games, and process notes from Blich Collective.' },
         { property: 'og:image', content: 'https://blichstudio.com/og-image.png' },
         { property: 'og:image:width', content: '1200' },
         { property: 'og:image:height', content: '630' },
         { property: 'og:url', content: 'https://blichstudio.com' },
-        { property: 'og:site_name', content: 'Blich Studio' },
+        { property: 'og:site_name', content: 'Blich Collective' },
         { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
-        { name: 'twitter:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
+        { name: 'twitter:title', content: 'Blich Collective | Sound, Motion & Play' },
+        { name: 'twitter:description', content: 'Analog sound, handmade motion, artsy indie games, and process notes from Blich Collective.' },
         { name: 'twitter:image', content: 'https://blichstudio.com/og-image.png' },
       ],
       link: [

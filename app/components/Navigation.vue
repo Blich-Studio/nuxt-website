@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import Button from './ui/Button.vue'
-import { useRandomLetterColor, randomFamily, familyVar } from '~/composables/useRandomAccent'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRandomLetterColor } from '~/composables/useRandomAccent'
 
 const letterColor = useRandomLetterColor()
 
@@ -29,11 +28,19 @@ onMounted(() => {
 })
 
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/blog', label: 'Blog' },
+  { href: '/', label: 'Signal' },
+  { href: '/projects', label: 'Archive' },
+  { href: '/sound', label: 'Sound' },
+  { href: '/motion', label: 'Motion' },
+  { href: '/play', label: 'Play' },
+  { href: '/blog', label: 'Notes' },
   { href: '/about', label: 'About' }
 ]
+
+function isActiveLink(href: string): boolean {
+  if (href === '/') return route.path === '/'
+  return route.path === href || route.path.startsWith(`${href}/`)
+}
 </script>
 
 <template>
@@ -51,7 +58,7 @@ const navLinks = [
           </span>
           <span :class="$style.logoAccent">
             <span
-              v-for="(ch, i) in 'STUDIO'"
+              v-for="(ch, i) in 'COLLECTIVE'"
               :key="'s' + i"
               :style="{ color: letterColor(route.path + ':s:' + i) }"
             >{{ ch }}</span>
@@ -64,7 +71,7 @@ const navLinks = [
             v-for="link in navLinks"
             :key="link.href"
             :to="link.href"
-            :class="[$style.navLink, route.path === link.href && $style.navLinkActive]"
+            :class="[$style.navLink, isActiveLink(link.href) && $style.navLinkActive]"
           >
             {{ link.label }}
           </NuxtLink>
@@ -73,17 +80,17 @@ const navLinks = [
           <template v-if="user && user.userId">
             <div :class="$style.authSection">
               <span :class="$style.greeting">Hello, {{ user.name }}</span>
-              <Button size="sm" variant="outline" @click="signOut" :class="$style.authButton">
+              <button type="button" @click="signOut" :class="$style.authButton">
                 <Icon name="lucide:log-out" :class="$style.buttonIcon" />
                 Sign Out
-              </Button>
+              </button>
             </div>
           </template>
           <template v-else>
-            <Button size="sm" variant="outline" @click="showAuthModal" :class="$style.authButton">
+            <button type="button" @click="showAuthModal" :class="$style.authButton">
               <Icon name="lucide:user" :class="$style.buttonIcon" />
               Sign In
-            </Button>
+            </button>
           </template>
         </div>
 
@@ -100,23 +107,23 @@ const navLinks = [
           v-for="link in navLinks"
           :key="link.href"
           :to="link.href"
-          :class="[$style.mobileNavLink, route.path === link.href && $style.navLinkActive]"
+          :class="[$style.mobileNavLink, isActiveLink(link.href) && $style.navLinkActive]"
           @click="isMobileMenuOpen = false"
         >
           {{ link.label }}
         </NuxtLink>
         <template v-if="user && user.userId">
           <div :class="$style.mobileGreeting">Hello, {{ user.name }}</div>
-          <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="signOut">
+          <button type="button" :class="$style.mobileAuthButton" @click="signOut">
             <Icon name="lucide:log-out" :class="$style.buttonIcon" />
             Sign Out
-          </Button>
+          </button>
         </template>
         <template v-else>
-          <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="showAuthModal">
+          <button type="button" :class="$style.mobileAuthButton" @click="showAuthModal">
             <Icon name="lucide:user" :class="$style.buttonIcon" />
             Sign In
-          </Button>
+          </button>
         </template>
       </div>
     </div>
@@ -133,21 +140,28 @@ const navLinks = [
   right: 0;
   z-index: 50;
   transition: all 0.3s ease;
-  background-color: transparent;
+  background:
+    linear-gradient(90deg, color-mix(in oklch, var(--accent-primary) 12%, transparent), transparent 35%),
+    color-mix(in oklch, var(--background) 82%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 2px solid color-mix(in oklch, var(--foreground) 12%, transparent);
 }
 
 .navScrolled {
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  background-color: color-mix(in oklch, var(--background) 95%, transparent);
+  border-bottom-color: var(--accent-primary);
+  box-shadow: 0 0.25rem 0 color-mix(in oklch, var(--accent-primary) 45%, transparent);
+  background:
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--foreground) 5%, transparent) 0 1px, transparent 1px 18px),
+    color-mix(in oklch, var(--background) 92%, transparent);
 }
 
 .navMobileOpen {
   background-color: var(--background);
 }
 
-:global(body.article-detail) .nav {
+:global(body.article-detail) .nav,
+:global(body.project-detail) .nav {
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -197,12 +211,13 @@ const navLinks = [
 
 .logoAccent {
   color: $color-clay-orange;
+  margin-left: 0.25rem;
 }
 
 .desktopNav {
   display: none;
   align-items: center;
-  gap: 2rem;
+  gap: 0.4rem;
 
   @media (min-width: $breakpoint-md) {
     display: flex;
@@ -210,18 +225,32 @@ const navLinks = [
 }
 
 .navLink {
-  font-size: $text-sm;
-  font-weight: 500;
-  color: $color-muted-foreground;
-  transition: color 0.2s ease;
+  position: relative;
+  display: inline-flex;
+  min-height: 2.125rem;
+  align-items: center;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid transparent;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: color-mix(in oklch, var(--foreground) 78%, var(--muted-foreground));
+  font-family: $font-mono;
+  text-transform: uppercase;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease;
 
   &:hover {
-    color: $color-clay-orange;
+    color: var(--accent-primary);
+    border-color: color-mix(in oklch, var(--accent-primary) 55%, transparent);
+    background: color-mix(in oklch, var(--accent-primary) 10%, transparent);
+    transform: rotate(-1deg);
   }
 }
 
 .navLinkActive {
-  color: $color-clay-orange;
+  color: var(--accent-primary-on);
+  border-color: var(--accent-primary);
+  background: var(--accent-primary);
+  box-shadow: 0.2rem 0.2rem 0 var(--accent-secondary);
 }
 
 .icon {
@@ -232,7 +261,7 @@ const navLinks = [
 .authSection {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
 .greeting {
@@ -241,22 +270,42 @@ const navLinks = [
 }
 
 .authButton {
-  border-radius: 9999px;
+  display: inline-flex;
+  min-height: 2.125rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid color-mix(in oklch, var(--accent-secondary) 70%, transparent);
+  background: color-mix(in oklch, var(--background) 72%, transparent);
+  color: var(--accent-secondary);
+  font-family: $font-mono;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0.2rem 0.2rem 0 color-mix(in oklch, var(--accent-secondary) 55%, transparent);
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    transform: rotate(1deg) translateY(-1px);
+    background: var(--accent-secondary);
+    color: var(--accent-secondary-on);
+  }
 }
 
 .buttonIcon {
   width: 1rem;
   height: 1rem;
-  margin-right: 0.5rem;
+  margin-right: 0;
 }
 
 .mobileMenuButton {
   display: block;
   padding: 0.5rem;
-  background: transparent;
-  border: none;
+  background: color-mix(in oklch, var(--accent-primary) 12%, transparent);
+  border: 1px solid color-mix(in oklch, var(--accent-primary) 50%, transparent);
   cursor: pointer;
-  color: $color-foreground;
+  color: var(--accent-primary);
 
   @media (min-width: $breakpoint-md) {
     display: none;
@@ -271,7 +320,7 @@ const navLinks = [
 .mobileMenu {
   display: block;
   padding: 1rem 0;
-  border-top: 1px solid $color-border;
+  border-top: 2px solid color-mix(in oklch, var(--accent-primary) 55%, transparent);
 
   @media (min-width: $breakpoint-md) {
     display: none;
@@ -279,12 +328,19 @@ const navLinks = [
 }
 
 .mobileNavLink {
-  display: block;
-  padding: 0.75rem 0;
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  width: fit-content;
+  margin-bottom: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid transparent;
+  font-family: $font-mono;
   font-size: $text-sm;
-  font-weight: 500;
+  font-weight: 800;
   color: $color-muted-foreground;
-  transition: color 0.2s ease;
+  text-transform: uppercase;
+  transition: color 0.2s ease, background-color 0.2s ease;
 }
 
 .mobileGreeting {
@@ -294,8 +350,21 @@ const navLinks = [
 }
 
 .mobileAuthButton {
-  width: 100%;
+  width: fit-content;
   margin-top: 0.5rem;
-  background: transparent;
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid color-mix(in oklch, var(--accent-secondary) 70%, transparent);
+  background: color-mix(in oklch, var(--background) 72%, transparent);
+  color: var(--accent-secondary);
+  font-family: $font-mono;
+  font-size: $text-sm;
+  font-weight: 800;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0.2rem 0.2rem 0 color-mix(in oklch, var(--accent-secondary) 55%, transparent);
 }
 </style>

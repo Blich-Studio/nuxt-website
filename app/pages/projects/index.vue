@@ -8,6 +8,7 @@ import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ProjectListItem } from '~/types/api'
 
 const tagAccent = useRandomItemAccent()
+const archiveSignals = ['full index', 'games', 'animation', 'sound objects', 'visual work', 'process debris']
 
 // Display format for projects
 interface DisplayProject {
@@ -79,8 +80,14 @@ const filteredProjects = computed(() => {
   <div :class="$style.page">
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
-        <h1 :class="$style.heroTitle">Our Projects</h1>
-        <p :class="$style.heroSubtitle">Explore our collection of games, animations, and interactive experiences</p>
+        <p :class="$style.eyebrow">ARCHIVE / FULL INDEX</p>
+        <h1 :class="$style.heroTitle">Everything kept, nothing too polished.</h1>
+        <p :class="$style.heroSubtitle">The full index of games, animation, sound objects, visual work, prototypes, and process debris.</p>
+        <div :class="$style.signalTags">
+          <span v-for="signal in archiveSignals" :key="signal" :style="tagAccent('archive:hero:' + signal)">
+            {{ signal }}
+          </span>
+        </div>
       </div>
     </section>
 
@@ -93,7 +100,7 @@ const filteredProjects = computed(() => {
             @click="setFilter('all')"
           >
             <Icon name="lucide:sparkles" :class="$style.filterIcon" />
-            All Projects
+            Full Archive
           </Button>
           <Button 
             v-for="tag in allTags" 
@@ -165,30 +172,64 @@ const filteredProjects = computed(() => {
 }
 
 .hero {
-  padding: 5rem 1rem;
-  background: linear-gradient(to bottom, color-mix(in oklch, var(--sunset-sky) 20%, transparent), $color-background);
+  padding: 8rem 1rem 5rem;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    linear-gradient(110deg, color-mix(in oklch, var(--accent-primary) 16%, transparent), transparent 34%),
+    $color-background;
+
+  @media (min-width: $breakpoint-md) {
+    padding-top: 9rem;
+  }
 }
 
 .heroContainer {
   max-width: 80rem;
   margin: 0 auto;
-  text-align: center;
+}
+
+.eyebrow {
+  margin: 0 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--accent-primary);
+  text-transform: uppercase;
 }
 
 .heroTitle {
   font-family: $font-display;
-  font-size: clamp(3rem, 8vw, $text-7xl);
+  max-width: 11ch;
+  font-size: clamp(4rem, 10vw, 8rem);
   font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0;
   margin-bottom: 1.5rem;
   text-wrap: balance;
+  text-transform: uppercase;
+  filter: drop-shadow(0.05em 0.05em 0 color-mix(in oklch, var(--accent-secondary) 72%, transparent));
 }
 
 .heroSubtitle {
   font-size: $text-xl;
   color: $color-muted-foreground;
-  max-width: 48rem;
-  margin: 0 auto;
+  max-width: 44rem;
+  margin: 0;
   text-wrap: balance;
+}
+
+.signalTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 2rem;
+
+  span {
+    border: 1px solid currentColor;
+    padding: 0.35rem 0.55rem;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
 }
 
 .filterSection {
