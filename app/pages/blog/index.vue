@@ -184,8 +184,12 @@ function openArticle(id: string) {
 }
 
 .hero {
-  padding: 5rem 1rem;
+  padding: 7.5rem 1rem 5rem;
   background: linear-gradient(to bottom, color-mix(in oklch, var(--sunset-sky) 20%, transparent), $color-background);
+
+  @media (min-width: $breakpoint-md) {
+    padding-top: 8.75rem;
+  }
 }
 
 .heroContainer {
