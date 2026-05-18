@@ -53,7 +53,7 @@ const platformLabel = (project: ProjectListItem) =>
 </script>
 
 <template>
-  <div class="channel-page">
+  <div :class="['channel-page', `channel-page--${channel}`]">
     <section class="channel-hero">
       <p class="eyebrow">{{ eyebrow }}</p>
       <h1>{{ title }}</h1>
@@ -133,6 +133,35 @@ const platformLabel = (project: ProjectListItem) =>
 .channel-page {
   min-height: 100vh;
   padding: 8rem 1rem 5rem;
+  background:
+    repeating-linear-gradient(135deg, color-mix(in oklch, var(--foreground) 4%, transparent) 0 1px, transparent 1px 18px),
+    linear-gradient(110deg, color-mix(in oklch, var(--accent-primary) 14%, transparent), transparent 34%),
+    var(--background);
+}
+
+.channel-page--sound {
+  background:
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--accent-primary) 14%, transparent) 0 2px, transparent 2px 18px),
+    repeating-linear-gradient(0deg, transparent 0 21px, color-mix(in oklch, var(--foreground) 5%, transparent) 21px 22px),
+    linear-gradient(118deg, color-mix(in oklch, var(--accent-secondary) 18%, transparent), transparent 42%),
+    var(--background);
+}
+
+.channel-page--motion {
+  background:
+    repeating-linear-gradient(0deg, color-mix(in oklch, var(--foreground) 5%, transparent) 0 1px, transparent 1px 42px),
+    repeating-linear-gradient(90deg, color-mix(in oklch, var(--accent-primary) 10%, transparent) 0 1px, transparent 1px 64px),
+    linear-gradient(132deg, color-mix(in oklch, var(--accent-secondary) 16%, transparent), transparent 38%),
+    var(--background);
+}
+
+.channel-page--play {
+  background:
+    linear-gradient(90deg, color-mix(in oklch, var(--accent-primary) 16%, transparent) 0 10%, transparent 10% 100%),
+    repeating-linear-gradient(90deg, transparent 0 15px, color-mix(in oklch, var(--foreground) 5%, transparent) 15px 16px),
+    repeating-linear-gradient(0deg, transparent 0 15px, color-mix(in oklch, var(--accent-secondary) 8%, transparent) 15px 16px),
+    linear-gradient(315deg, color-mix(in oklch, var(--accent-secondary) 14%, transparent), transparent 45%),
+    var(--background);
 }
 
 .channel-hero,
