@@ -7,9 +7,9 @@ const itemAccent = useRandomItemAccent()
   <div :class="$style.page">
     <section :class="$style.hero">
       <p :class="$style.eyebrow">ABOUT / BLICH COLLECTIVE</p>
-      <h1 :class="$style.title">A small signal table for sound, motion, and play.</h1>
+      <h1 :class="$style.title">A signal table for machine sound, handmade motion, and weird play.</h1>
       <p :class="$style.lead">
-        Blich Collective is an evolving creative archive for analog techno, machine rhythms, hand-drawn and stop motion animation, visual art, and artsy indie game development.
+        Blich Collective is a Prague-based archive of analog techno, machine rhythm, hand-drawn and stop motion animation, visual art, and artsy indie game work.
       </p>
       <div :class="$style.tags">
         <span v-for="field in fields" :key="field" :style="itemAccent('about:' + field)">{{ field }}</span>
@@ -21,7 +21,7 @@ const itemAccent = useRandomItemAccent()
         <span :class="$style.panelCode">01</span>
         <h2>What It Is</h2>
         <p>
-          A public-facing collective identity for releases, process notes, playable objects, animation fragments, sound sessions, and future event material.
+          A public signal for releases, field notes, playable objects, animation fragments, sound sessions, and future room material.
         </p>
       </article>
 
@@ -29,7 +29,7 @@ const itemAccent = useRandomItemAccent()
         <span :class="$style.panelCode">02</span>
         <h2>What It Makes</h2>
         <p>
-          Tracks, patches, loops, drawings, stop motion tests, game prototypes, interactive systems, and notes from the messy parts of making.
+          Tracks, patches, loops, drawings, stop motion tests, game prototypes, interactive systems, and notes from the workbench.
         </p>
       </article>
 
@@ -37,7 +37,7 @@ const itemAccent = useRandomItemAccent()
         <span :class="$style.panelCode">03</span>
         <h2>Where It Goes</h2>
         <p>
-          The hidden party section can later become a place for flyers, live recordings, photos, invitations, and transmission logs.
+          The hidden party section can later become a room for flyers, live recordings, photos, invitations, and transmission logs.
         </p>
       </article>
     </section>

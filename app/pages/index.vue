@@ -27,21 +27,21 @@ const channels = [
     href: '/sound',
     icon: 'lucide:radio',
     kicker: 'machines / pressure / repetition',
-    description: 'Analog synth sketches, drum machine patterns, tribe and analog techno experiments, sound design fragments, and live set notes.',
+    description: 'Tracks, live recordings, raw jams, and analog techno sessions stored as signal, mirror, and memory.',
   },
   {
     title: 'Motion',
     href: '/motion',
     icon: 'lucide:scan-line',
     kicker: 'drawn / filmed / assembled',
-    description: 'Hand-drawn animation, stop motion tests, loops, character studies, scanned marks, and frame-by-frame process.',
+    description: 'Hand-drawn loops, stop motion tests, scans, frame damage, and small moving things made for screens, rooms, and games.',
   },
   {
     title: 'Play',
     href: '/play',
     icon: 'lucide:gamepad-2',
     kicker: 'weird systems / playable art',
-    description: 'Small games, prototypes, mechanics, worlds, and interactive pieces that keep one foot in the sketchbook.',
+    description: 'Games, prototypes, visual toys, broken systems, and interactive releases with the sketch still visible.',
   },
 ]
 
@@ -83,7 +83,7 @@ function getArticleTag(article: ArticleListItem): string {
             <span aria-hidden="true">weird games.</span>
           </h1>
           <p class="hero-text">
-            A living archive for sound system experiments, drawn and filmed animation, artsy indie games, and the notes that leak out between them.
+            Blich Collective collects machine music, handmade frames, playable systems, and field notes from the edges between them.
           </p>
           <div class="hero-actions">
             <NuxtLink to="/projects" class="button button-primary">
@@ -176,7 +176,7 @@ function getArticleTag(article: ArticleListItem): string {
       <div class="section-head section-head-row">
         <div>
           <p class="eyebrow">ARCHIVE</p>
-          <h2>Recent work from the desk, screen, and floor.</h2>
+          <h2>Objects from the desk, screen, and floor.</h2>
         </div>
         <NuxtLink to="/projects" class="text-link">
           Full archive <Icon name="lucide:arrow-right" />
@@ -204,7 +204,7 @@ function getArticleTag(article: ArticleListItem): string {
       <div class="section-head section-head-row">
         <div>
           <p class="eyebrow">NOTES</p>
-          <h2>Devlogs, sound logs, process scraps.</h2>
+          <h2>Notes from the table, before they dry.</h2>
         </div>
         <NuxtLink to="/blog" class="text-link">
           All notes <Icon name="lucide:arrow-right" />

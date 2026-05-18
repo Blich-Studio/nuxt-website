@@ -8,7 +8,7 @@ import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ArticleListItem, Tag } from '~/types/api'
 
 const tagAccent = useRandomItemAccent()
-const noteSignals = ['devlogs', 'sound logs', 'release notes', 'process scraps', 'field notes', 'behind scenes']
+const noteSignals = ['devlogs', 'patch notes', 'sound logs', 'field notes', 'unfinished zones', 'making-of scraps']
 
 // Transform API article to display format
 interface DisplayArticle {
@@ -84,8 +84,8 @@ function openArticle(id: string) {
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
         <p :class="$style.eyebrow">NOTES / FIELD LOG</p>
-        <h1 :class="$style.heroTitle">Process scraps, release notes, field signals.</h1>
-        <p :class="$style.heroSubtitle">Devlogs, sound logs, process scraps, release notes, and behind-the-scenes fragments from the collective</p>
+        <h1 :class="$style.heroTitle">Notes from the table, before they dry.</h1>
+        <p :class="$style.heroSubtitle">Devlogs, patch notes, sound logs, making-of scraps, and small reports from unfinished zones.</p>
         <div :class="$style.signalTags">
           <span v-for="signal in noteSignals" :key="signal" :style="tagAccent('notes:hero:' + signal)">
             {{ signal }}

@@ -13,7 +13,7 @@ const currentYear = new Date().getFullYear()
             <span :class="$style.logoAccent">COLLECTIVE</span>
           </NuxtLink>
           <p :class="$style.brandDescription">
-            Analog sound, handmade motion, artsy indie games, visual experiments, and notes from the process.
+            Machine sound, handmade motion, playable systems, and notes from the workbench.
           </p>
           <div :class="$style.socialLinks">
             <a href="https://x.com/BlichStudio" target="_blank" rel="noopener noreferrer" :class="$style.socialLink" aria-label="X (Twitter)">
@@ -74,15 +74,15 @@ const currentYear = new Date().getFullYear()
           <h4 :class="$style.linksTitle">Contact</h4>
           <ul :class="$style.linksList">
             <li :class="$style.contactItem">hello@blichstudio.com</li>
-            <li :class="$style.contactItem">Press inquiries</li>
+            <li :class="$style.contactItem">Press signals</li>
             <li :class="$style.contactItem">Collaborations</li>
-            <li :class="$style.contactItem">Discord</li>
+            <li :class="$style.contactItem">Room soon</li>
           </ul>
         </div>
       </div>
 
       <div :class="$style.copyright">
-        <p>&copy; {{ currentYear }} Blich Collective. All rights reserved.</p>
+        <p>&copy; {{ currentYear }} Blich Collective. Signal kept, noise allowed.</p>
       </div>
     </div>
   </footer>

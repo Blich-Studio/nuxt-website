@@ -8,7 +8,7 @@ import { useRandomItemAccent } from '~/composables/useRandomAccent'
 import type { ProjectListItem } from '~/types/api'
 
 const tagAccent = useRandomItemAccent()
-const archiveSignals = ['full index', 'games', 'motion', 'sound objects', 'visual work', 'process debris']
+const archiveSignals = ['full index', 'games', 'animation', 'sound objects', 'visual work', 'process debris']
 
 // Display format for projects
 interface DisplayProject {
@@ -81,8 +81,8 @@ const filteredProjects = computed(() => {
     <section :class="$style.hero">
       <div :class="$style.heroContainer">
         <p :class="$style.eyebrow">ARCHIVE / FULL INDEX</p>
-        <h1 :class="$style.heroTitle">Full index, playable things, visual noise.</h1>
-        <p :class="$style.heroSubtitle">Games, animation, sound-adjacent experiments, visual work, and process objects from Blich Collective</p>
+        <h1 :class="$style.heroTitle">Everything kept, nothing too polished.</h1>
+        <p :class="$style.heroSubtitle">The full index of games, animation, sound objects, visual work, prototypes, and process debris.</p>
         <div :class="$style.signalTags">
           <span v-for="signal in archiveSignals" :key="signal" :style="tagAccent('archive:hero:' + signal)">
             {{ signal }}
