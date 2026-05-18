@@ -40,6 +40,8 @@ const projects = computed(() => {
   return items.filter(project => project.channel === props.channel)
 })
 
+const titleTokens = computed(() => props.title.split(/(\s+)/).filter(Boolean))
+
 const primaryHref = (project: ProjectListItem) =>
   project.externalUrl ||
   project.itchioUrl ||
@@ -56,7 +58,17 @@ const platformLabel = (project: ProjectListItem) =>
   <div class="channel-page">
     <section class="channel-hero">
       <p class="eyebrow">{{ eyebrow }}</p>
-      <h1>{{ title }}</h1>
+      <h1 :aria-label="title">
+        <span
+          v-for="(token, index) in titleTokens"
+          :key="index"
+          :aria-hidden="true"
+          :class="{ 'title-space': /^\s+$/.test(token) }"
+          :style="/^\s+$/.test(token) ? undefined : itemAccent(channel + ':title:' + token + ':' + index)"
+        >
+          {{ token }}
+        </span>
+      </h1>
       <p>{{ description }}</p>
       <div class="tag-row">
         <span v-for="tag in tags" :key="tag" :style="itemAccent(channel + ':' + tag)">
@@ -156,6 +168,10 @@ h1 {
   line-height: 0.9;
   letter-spacing: 0;
   text-transform: uppercase;
+}
+
+h1 span:not(.title-space) {
+  display: inline-block;
 }
 
 .channel-hero p {
