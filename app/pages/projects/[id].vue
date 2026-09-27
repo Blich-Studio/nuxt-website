@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { marked } from 'marked'
+import { renderMarkdown, safeWebUrl } from '~/utils/render-markdown'
 import { useRoute } from 'vue-router'
 import Badge from '~/components/ui/Badge.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
@@ -50,10 +50,10 @@ function transformProject(project: ApiProject): DisplayProject {
     description: project.description,
     thumbnail: project.coverImageUrl ?? undefined,
     galleryUrls: project.galleryUrls || [],
-    githubUrl: project.githubUrl ?? undefined,
-    itchioUrl: project.itchioUrl ?? undefined,
-    steamUrl: project.steamUrl ?? undefined,
-    youtubeUrl: project.youtubeUrl ?? undefined,
+    githubUrl: safeWebUrl(project.githubUrl),
+    itchioUrl: safeWebUrl(project.itchioUrl),
+    steamUrl: safeWebUrl(project.steamUrl),
+    youtubeUrl: safeWebUrl(project.youtubeUrl),
     tags: project.tags.map(t => t.name),
     likes: project.likesCount || 0,
     isLiked: project.isLiked || false,
@@ -77,11 +77,11 @@ const { data: project, error } = await useAsyncData(`project-${id}`, async () =>
 useHead({ bodyAttrs: { class: 'project-detail' } })
 
 const renderedDescription = computed(() =>
-  project.value?.description ? (marked.parse(project.value.description) as string) : ''
+  project.value?.description ? renderMarkdown(project.value.description) : ''
 )
 
 const renderedShortDescription = computed(() =>
-  project.value?.shortDescription ? (marked.parseInline(project.value.shortDescription) as string) : ''
+  project.value?.shortDescription ? renderMarkdown(project.value.shortDescription, true) : ''
 )
 
 const isLiked = ref(project.value?.isLiked || false)

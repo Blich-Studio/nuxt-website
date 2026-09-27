@@ -1,3 +1,5 @@
+import type { FetchError, FetchResponse } from 'ofetch'
+import type { H3Event } from 'h3'
 import {
   defineEventHandler,
   getMethod,
@@ -10,9 +12,33 @@ import {
   createError,
 } from 'h3'
 
-// In-memory state for token refresh coordination
-let isRefreshing = false
-let refreshPromise: Promise<string | null> | null = null
+interface ProxyData extends Record<string, unknown> {
+  access_token?: string
+  refresh_token?: string
+  data?: ProxyData
+}
+
+interface RefreshResult {
+  accessToken: string | null
+  newRefreshToken?: string
+}
+
+// Share only in-flight work for the same gateway and presented refresh credential.
+// Cross-instance rotation is enforced atomically by the API; never share identities.
+const refreshes = new Map<string, Promise<RefreshResult>>()
+
+async function refreshSession(gateway: string, token: string): Promise<RefreshResult> {
+  const key = `${gateway}\0${token}`
+  const pending = refreshes.get(key)
+  if (pending) return pending
+  const request = refreshAccessToken(gateway, token)
+  refreshes.set(key, request)
+  try {
+    return await request
+  } finally {
+    if (refreshes.get(key) === request) refreshes.delete(key)
+  }
+}
 
 /**
  * Attempt to refresh the access token using the refresh token
@@ -22,21 +48,26 @@ async function refreshAccessToken(
   refreshToken: string
 ): Promise<{ accessToken: string | null; newRefreshToken?: string }> {
   try {
-    const response = await $fetch.raw(`${gatewayBaseUrl}/auth/refresh`, {
+    const response = await $fetch.raw<ProxyData>(`${gatewayBaseUrl}/auth/refresh`, {
       method: 'POST',
+      retry: 0,
+      timeout: 5000,
       body: { refreshToken },
       headers: { 'Content-Type': 'application/json' },
     })
 
-    const data = response._data as any
+    const data = response._data?.data ?? response._data
     const accessToken = data?.access_token ?? null
     const newRefreshToken = data?.refresh_token
 
     console.log('[Proxy] Token refresh successful')
     return { accessToken, newRefreshToken }
-  } catch (error: any) {
+  } catch (caught: unknown) {
+    const error = caught as FetchError<ProxyData>
     console.error('[Proxy] Token refresh failed:', error?.statusCode || error?.message)
-    return { accessToken: null }
+    const status = error?.response?.status || error?.statusCode
+    if (status === 401 || status === 403) return { accessToken: null }
+    throw createError({ statusCode: 503, statusMessage: 'Session service temporarily unavailable. Please try again.' })
   }
 }
 
@@ -49,8 +80,8 @@ function getTokensFromCookies(cookieHeader: string | undefined): {
 } {
   if (!cookieHeader) return { accessToken: null, refreshToken: null }
 
-  const accessMatch = cookieHeader.match(/blich_access=([^;]+)/)
-  const refreshMatch = cookieHeader.match(/blich_refresh=([^;]+)/)
+  const accessMatch = cookieHeader.match(/(?:^|;\s*)blich_access=([^;]+)/)
+  const refreshMatch = cookieHeader.match(/(?:^|;\s*)blich_refresh=([^;]+)/)
 
   return {
     accessToken: accessMatch?.[1] || null,
@@ -84,7 +115,7 @@ function buildForwardHeaders(
  * Set auth cookies on the response
  */
 function setAuthCookies(
-  event: any,
+  event: H3Event,
   accessToken: string | null,
   refreshToken: string | null,
   isLocalhost: boolean
@@ -112,7 +143,7 @@ function setAuthCookies(
 /**
  * Clear auth cookies
  */
-function clearAuthCookies(event: any, isLocalhost: boolean) {
+function clearAuthCookies(event: H3Event, isLocalhost: boolean) {
   const secureFlag = isLocalhost ? '' : ' Secure;'
   appendHeader(
     event,
@@ -147,34 +178,48 @@ export default defineEventHandler(async (event) => {
 
   // Check if localhost for secure cookie flag
   const requestHost = headers.host || ''
-  const isLocalhost = requestHost.startsWith('localhost') || requestHost.startsWith('127.0.0.1')
+  const isLocalhost = /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestHost)
 
   // Get tokens from cookies
   const cookieHeader = headers.cookie
   let { accessToken, refreshToken } = getTokensFromCookies(cookieHeader)
 
   // Read body for non-GET/HEAD requests
-  const body = method === 'GET' || method === 'HEAD' ? undefined : await readBody(event)
+  let body = method === 'GET' || method === 'HEAD' ? undefined : await readBody(event)
+
+  // Revocation uses the HttpOnly credential, including after the access token expires.
+  if (method === 'POST' && path === 'auth/logout') {
+    clearAuthCookies(event, isLocalhost)
+    if (!refreshToken) return { success: true }
+    body = { refreshToken }
+  }
+  if (method === 'POST' && path === 'auth/refresh') {
+    if (!refreshToken) throw createError({ statusCode: 401, statusMessage: 'Not authenticated' })
+    body = { refreshToken }
+  }
 
   /**
    * Make the API request with given access token
    */
   async function makeRequest(token: string | null): Promise<{
-    response: any | null
-    error: any | null
+    response: FetchResponse<ProxyData> | null
+    error: FetchError<ProxyData> | null
     statusCode: number
   }> {
     const forwardHeaders = buildForwardHeaders(headers, token)
 
     try {
-      const res = await $fetch.raw(targetUrl, {
+      const res = await $fetch.raw<ProxyData>(targetUrl, {
         method,
+        retry: 0,
+        timeout: 15000,
         query,
         body,
         headers: forwardHeaders,
       })
       return { response: res, error: null, statusCode: res.status }
-    } catch (fetchError: any) {
+    } catch (caught: unknown) {
+      const fetchError = caught as FetchError<ProxyData>
       const statusCode = fetchError.response?.status || fetchError.statusCode || 500
       return { response: null, error: fetchError, statusCode }
     }
@@ -193,49 +238,24 @@ export default defineEventHandler(async (event) => {
   ) {
     console.log(`[Proxy] 401 on ${method} /${path}, attempting token refresh...`)
 
-    // Coordinate refresh attempts to prevent thundering herd
-    if (!isRefreshing) {
-      isRefreshing = true
-      refreshPromise = (async () => {
-        try {
-          const refreshResult = await refreshAccessToken(gatewayBaseUrl, refreshToken!)
-          if (refreshResult.accessToken) {
-            // Store new tokens for this request cycle
-            accessToken = refreshResult.accessToken
-            if (refreshResult.newRefreshToken) {
-              refreshToken = refreshResult.newRefreshToken
-            }
-            // Set cookies on response
-            setAuthCookies(event, accessToken, refreshToken, isLocalhost)
-            return accessToken
-          }
-          return null
-        } finally {
-          isRefreshing = false
-          refreshPromise = null
-        }
-      })()
-    }
-
-    // Wait for refresh to complete (whether we initiated it or another request did)
-    const newAccessToken = refreshPromise ? await refreshPromise : null
-
-    if (newAccessToken) {
-      console.log(`[Proxy] Token refreshed, retrying ${method} /${path}...`)
-      accessToken = newAccessToken
+    const refreshed = await refreshSession(gatewayBaseUrl, refreshToken)
+    if (refreshed.accessToken) {
+      accessToken = refreshed.accessToken
+      refreshToken = refreshed.newRefreshToken || refreshToken
+      // Every waiting response needs its own cookies after rotation.
+      setAuthCookies(event, accessToken, refreshToken, isLocalhost)
       result = await makeRequest(accessToken)
     } else {
-      // Refresh failed - clear cookies
-      console.log('[Proxy] Token refresh failed, clearing auth cookies')
       clearAuthCookies(event, isLocalhost)
     }
   }
 
   // Handle errors
   if (result.error) {
+    if (result.statusCode === 401 && path !== 'auth/login' && path !== 'auth/logout') clearAuthCookies(event, isLocalhost)
     const errorData = result.error.response?._data || result.error.data
-    const errorMessage =
-      errorData?.message || errorData?.error || result.error.message || 'API request failed'
+    const errorMessage = [errorData?.message, errorData?.error, result.error.message]
+      .find((value): value is string => typeof value === 'string' && value.length > 0) || 'API request failed'
 
     // Only log non-401 errors or unexpected 401s
     if (result.statusCode !== 401) {
@@ -253,41 +273,23 @@ export default defineEventHandler(async (event) => {
   }
 
   const res = result.response
+  if (!res) throw createError({ statusCode: 502, statusMessage: 'Invalid API response' })
 
-  // Process successful response - extract and store tokens from login/refresh
-  try {
-    const responseData = res._data as any
-    const newAccessToken = responseData?.data?.access_token ?? responseData?.access_token
-    const newRefreshToken = responseData?.data?.refresh_token ?? responseData?.refresh_token
-
-    if (newAccessToken) {
-      setAuthCookies(event, newAccessToken, newRefreshToken, isLocalhost)
-
-      // Remove tokens from response body (don't expose to browser)
-      if (responseData?.data?.access_token) delete responseData.data.access_token
-      if (responseData?.data?.refresh_token) delete responseData.data.refresh_token
-      if (responseData?.access_token) delete responseData.access_token
-      if (responseData?.refresh_token) delete responseData.refresh_token
-
-      res._data = responseData
+  const responseData = res._data
+  const tokenData = responseData?.data ?? responseData
+  if (method === 'POST' && (path === 'auth/login' || path === 'auth/refresh')) {
+    if (tokenData?.access_token) {
+      setAuthCookies(event, tokenData.access_token, tokenData.refresh_token ?? null, isLocalhost)
     }
-
-    // Clear cookies on logout
-    if (method === 'POST' && path.endsWith('auth/logout')) {
-      clearAuthCookies(event, isLocalhost)
+  }
+  // Tokens never leave the server proxy, including wrapped responses.
+  for (const data of [responseData, responseData?.data]) {
+    if (data && typeof data === 'object') {
+      delete data.access_token
+      delete data.refresh_token
     }
-  } catch (e) {
-    // Ignore response processing errors
   }
-
-  // Forward Set-Cookie headers from upstream
-  const setCookieHeaders =
-    res.headers.getSetCookie?.() ??
-    (res.headers.get('set-cookie') ? [res.headers.get('set-cookie')!] : [])
-
-  for (const cookieValue of setCookieHeaders) {
-    appendHeader(event, 'set-cookie', cookieValue)
-  }
+  // Cookie ownership stays here; upstream headers must not undo a logout.
 
   setResponseStatus(event, res.status)
   return res._data
