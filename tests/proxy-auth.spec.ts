@@ -1,102 +1,127 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-// Mock h3 helpers used in the handler
-const appendHeaderMock = vi.fn()
-const setResponseStatusMock = vi.fn()
-let methodMock = 'GET'
-let routerParamMock = ''
-let headersMock: Record<string, any> = {}
-let bodyMock: any = undefined
-
-// Provide runtime config helper expected by the handler
-// @ts-ignore
-global.useRuntimeConfig = () => ({ public: { apiUrl: 'https://api.blichstudio.com' } })
+import handler from '../server/api/_proxy/[...path]'
+interface TestEvent {
+  path: string
+  method: string
+  headers: Record<string, string>
+  body?: unknown
+  cookies: string[]
+  status: number
+}
+interface ProxyOptions { body: { refreshToken: string }; headers: Record<string, string> }
+const handle = handler as unknown as (event: TestEvent) => Promise<unknown>
 
 vi.mock('h3', () => ({
-  defineEventHandler: (fn: any) => fn,
-  getMethod: () => methodMock,
-  getRouterParam: (_event: any, name: string) => routerParamMock,
+  defineEventHandler: (fn: unknown) => fn,
+  getMethod: (event: TestEvent) => event.method,
+  getRouterParam: (event: TestEvent) => event.path,
   getQuery: () => ({}),
-  getHeaders: () => headersMock,
-  readBody: async () => bodyMock,
-  appendHeader: (...args: any[]) => appendHeaderMock(...args),
-  setResponseStatus: (...args: any[]) => setResponseStatusMock(...args),
-  // createError is used by the handler in some branches
-  createError: (e: any) => new Error(e?.statusMessage || 'error'),
+  getHeaders: (event: TestEvent) => event.headers,
+  readBody: async (event: TestEvent) => event.body,
+  readRawBody: async (event: TestEvent) => event.body,
+  appendHeader: (event: TestEvent, _name: string, value: string) => event.cookies.push(value),
+  setResponseStatus: (event: TestEvent, status: number) => { event.status = status },
+  createError: (value: { statusMessage: string; statusCode: number }) => Object.assign(new Error(value.statusMessage), value),
 }))
-
-// Ensure global $fetch exists and can be spied
-// @ts-ignore
-global.$fetch = { raw: vi.fn() }
-
-// Import the handler AFTER mocks
-import proxyHandler from '../server/api/_proxy/[...path].ts'
-
+const prefix = 'blich'
+const raw = vi.fn()
+function event(path = 'auth/me', actor = 'A', method = 'GET'): TestEvent {
+  return { path, method, headers: { host: 'admin.example.test', cookie: `${prefix}_access=expired-${actor}; ${prefix}_refresh=refresh-${actor}` }, body: undefined, cookies: [] as string[], status: 200 }
+}
+function response(data: unknown, status = 200) { return { _data: data, status, headers: new Headers() } }
+function unauthorized() { return Object.assign(new Error('Expired'), { statusCode: 401 }) }
 beforeEach(() => {
-  appendHeaderMock.mockReset()
-  setResponseStatusMock.mockReset()
-  ;(global.$fetch.raw as any).mockReset()
-  methodMock = 'GET'
-  routerParamMock = ''
-  headersMock = {}
-  bodyMock = undefined
+  raw.mockReset()
+  vi.stubGlobal('$fetch', { raw })
+  vi.stubGlobal('useRuntimeConfig', () => ({ apiUrl: 'https://api.example.test', public: {} }))
 })
 
-describe('API proxy auth behavior', () => {
-  it('sets HttpOnly cookies when upstream returns tokens on login', async () => {
-    methodMock = 'POST';
-    routerParamMock = 'auth/login';
-    bodyMock = { email: 'x', password: 'y' }
-
-    ;(global.$fetch.raw as any).mockResolvedValueOnce({
-      status: 201,
-      _data: { data: { access_token: 'AT', refresh_token: 'RT', user: { id: 'u1' } } },
-      headers: { getSetCookie: () => undefined, get: () => undefined },
+describe('cookie-only proxy sessions', () => {
+  it.each([false, true])('removes tokens from the actual login response (wrapped=%s)', async (wrapped) => {
+    const tokens = { access_token: 'AT', refresh_token: 'RT', user: { id: 'A' } }
+    raw.mockResolvedValue(response(wrapped ? { data: tokens } : tokens))
+    const request = event('auth/login', 'A', 'POST')
+    const data = await handle(request)
+    expect(JSON.stringify(data)).not.toMatch(/access_token|refresh_token|AT|RT/)
+    expect(request.cookies).toEqual(expect.arrayContaining([
+      expect.stringContaining(`${prefix}_access=AT; Path=/; HttpOnly; Secure;`),
+      expect.stringContaining(`${prefix}_refresh=RT; Path=/; HttpOnly; Secure;`),
+    ]))
+  })
+  it('uses cookies rather than a client-supplied Authorization header', async () => {
+    raw.mockResolvedValue(response({ userId: 'A' }))
+    const request = event()
+    Object.assign(request.headers, { authorization: 'Bearer other-user' })
+    await handle(request)
+    expect(raw.mock.calls[0][1].headers.authorization).toBe('Bearer expired-A')
+  })
+  it('keeps concurrent users isolated', async () => {
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    raw.mockImplementation(async (url: string, options: ProxyOptions) => {
+      if (url.endsWith('/auth/refresh')) {
+        await gate
+        const actor = options.body.refreshToken.split('-')[1]
+        return response({ access_token: `fresh-${actor}`, refresh_token: `rotated-${actor}` })
+      }
+      if (options.headers.authorization.includes('expired')) throw unauthorized()
+      return response({ actor: options.headers.authorization })
     })
-
-    const res = await proxyHandler({} as any)
-
-    // Cookies set via appendHeader
-    expect(appendHeaderMock).toHaveBeenCalled()
-    // Expect cookies for access and refresh in any argument position
-    const hasAccess = appendHeaderMock.mock.calls.some(call => call.some(arg => typeof arg === 'string' && /blich_access=AT/.test(arg)))
-    const hasRefresh = appendHeaderMock.mock.calls.some(call => call.some(arg => typeof arg === 'string' && /blich_refresh=RT/.test(arg)))
-    expect(hasAccess).toBeTruthy()
-    expect(hasRefresh).toBeTruthy()
-
-    // Response body should not contain raw tokens
-    expect((res as any)?.data?.data?.access_token).toBeUndefined()
-    expect((res as any)?.data?.data?.refresh_token).toBeUndefined()
+    const a = event('articles', 'A'), b = event('articles', 'B')
+    const results = Promise.all([handle(a), handle(b)])
+    await vi.waitFor(() => expect(raw.mock.calls.filter(([url]) => url.endsWith('/auth/refresh'))).toHaveLength(2))
+    release()
+    expect(await results).toEqual([{ actor: 'Bearer fresh-A' }, { actor: 'Bearer fresh-B' }])
+    expect(a.cookies.join(' ')).not.toContain('fresh-B')
+    expect(b.cookies.join(' ')).not.toContain('fresh-A')
   })
-
-  it('translates blich_access cookie into Authorization header when proxying', async () => {
-    methodMock = 'GET';
-    routerParamMock = 'auth/me';
-
-    (global.$fetch.raw as any).mockResolvedValueOnce({ status: 200, _data: { data: { user: { id: 'u1' } } }, headers: { getSetCookie: () => undefined, get: () => undefined } })
-
-    headersMock = { cookie: 'blich_access=MYTOK; other=1' }
-
-    await proxyHandler({} as any)
-
-    expect((global.$fetch.raw as any).mock.calls.length).toBeGreaterThan(0)
-    const call = (global.$fetch.raw as any).mock.calls[0]
-    const options = call[1]
-    expect(options.headers.authorization).toBe('Bearer MYTOK')
+  it('shares same-session work but sends rotated cookies to every waiting response', async () => {
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    raw.mockImplementation(async (url: string, options: ProxyOptions) => {
+      if (url.endsWith('/auth/refresh')) { await gate; return response({ access_token: 'fresh-A', refresh_token: 'rotated-A' }) }
+      if (options.headers.authorization.includes('expired')) throw unauthorized()
+      return response({ ok: true })
+    })
+    const a = event(), b = event()
+    const results = Promise.all([handle(a), handle(b)])
+    await vi.waitFor(() => expect(raw.mock.calls).toHaveLength(3))
+    release()
+    await results
+    for (const request of [a, b]) expect(request.cookies.join(' ')).toContain(`${prefix}_refresh=rotated-A`)
+    expect(raw.mock.calls.filter(([url]) => url.endsWith('/auth/refresh'))).toHaveLength(1)
   })
-
-  it('clears cookies on logout', async () => {
-    methodMock = 'POST';
-    routerParamMock = 'auth/logout';
-
-    ;(global.$fetch.raw as any).mockResolvedValueOnce({ status: 200, _data: { ok: true }, headers: { getSetCookie: () => undefined, get: () => undefined } })
-
-    await proxyHandler({} as any)
-
-    // Expect an expired cookie set on logout
-    const hasCleared = appendHeaderMock.mock.calls.some(call => call.some(arg => typeof arg === 'string' && /blich_access=;/.test(arg)))
-    const hasExpires = appendHeaderMock.mock.calls.some(call => call.some(arg => typeof arg === 'string' && /Expires=Thu, 01 Jan 1970 00:00:00 GMT/.test(arg)))
-    expect(hasCleared).toBeTruthy()
-    expect(hasExpires).toBeTruthy()
+  it.each([404, 503])('clears both cookies even when revocation returns %s', async (status) => {
+    raw.mockRejectedValue(Object.assign(new Error('Failed'), { statusCode: status }))
+    const request = event('auth/logout', 'A', 'POST')
+    request.body = { refreshToken: 'attacker-controlled' }
+    await Promise.resolve(handle(request)).catch(() => undefined)
+    expect(request.cookies).toHaveLength(2)
+    expect(request.cookies.every(cookie => cookie.includes('Expires=Thu, 01 Jan 1970'))).toBe(true)
+    expect(raw.mock.calls[0][1].body).toEqual({ refreshToken: 'refresh-A' })
+  })
+  it('keeps cookies during a temporary refresh-service failure', async () => {
+    raw.mockImplementation(async (url: string) => {
+      if (url.endsWith('/auth/refresh')) throw Object.assign(new Error('Unavailable'), { statusCode: 503 })
+      throw unauthorized()
+    })
+    const request = event()
+    await expect(handle(request)).rejects.toMatchObject({ statusCode: 503 })
+    expect(request.cookies).toEqual([])
+  })
+  it('clears an expired access cookie when no refresh cookie remains', async () => {
+    raw.mockRejectedValue(unauthorized())
+    const request = event()
+    request.headers.cookie = `${prefix}_access=expired-A`
+    await Promise.resolve(handle(request)).catch(() => undefined)
+    expect(request.cookies.join(' ')).toContain('Expires=Thu, 01 Jan 1970')
+    expect(raw).toHaveBeenCalledOnce()
+  })
+  it('makes logout idempotent without a refresh cookie', async () => {
+    const request = event('auth/logout', 'A', 'POST')
+    request.headers.cookie = ''
+    expect(await handle(request)).toEqual({ success: true })
+    expect(raw).not.toHaveBeenCalled()
+    expect(request.cookies).toHaveLength(2)
   })
 })

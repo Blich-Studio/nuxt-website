@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { marked } from 'marked'
+import { renderMarkdown } from '~/utils/render-markdown'
 import { useRoute, useRouter } from 'vue-router'
 import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
@@ -130,7 +130,7 @@ const renderedContent = ref('')
 
 watch(() => article.value?.content, async (content) => {
   if (!content) return
-  renderedContent.value = await marked(content)
+  renderedContent.value = renderMarkdown(content)
 }, { immediate: true })
 </script>
 

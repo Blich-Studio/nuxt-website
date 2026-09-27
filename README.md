@@ -161,3 +161,12 @@ The proxy forwards `Set-Cookie` headers for SSR-compatible cookie-based auth.
 
 Private - Blich Studio © 2025
 
+
+
+## Relaunch session and rendering foundation (2026-09-27)
+
+The server proxy owns HttpOnly access/refresh cookies. It strips token fields from login/refresh responses, coordinates only requests presenting the same refresh credential, and clears cookies on logout even if upstream revocation fails. Temporary refresh-service failures return 503 without discarding cookies. The API gateway must provide `GET /auth/me` and `POST /auth/logout` before deploying this frontend.
+
+Markdown is parsed and then sanitized with an explicit `sanitize-html` allowlist in `app/utils/render-markdown.ts`. Keep CMS previews and public renderers on the same policy. Custom raw HTML, scripts, inline styles, and Markdown iframes are intentionally removed.
+
+Run `bun run test`, `bun run typecheck`, and `bun run build`. Use a local `NUXT_API_URL` (and `NUXT_PUBLIC_API_URL` for existing configurations) when verifying against test data. Never point mutation tests at production.
