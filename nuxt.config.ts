@@ -14,30 +14,31 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'Blich Studio | Stop Motion & Handmade Games',
+      title: 'Blich Studio | Independent games & open workshop',
       meta: [
-        { name: 'description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
-        { name: 'theme-color', content: '#1E1A26' },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
-        { property: 'og:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
-        { property: 'og:image', content: 'https://blichstudio.com/og-image.png' },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
-        { property: 'og:url', content: 'https://blichstudio.com' },
+        { name: 'theme-color', content: '#161914' },
         { property: 'og:site_name', content: 'Blich Studio' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:title', content: 'Blich Studio | Stop Motion & Handmade Games' },
-        { name: 'twitter:description', content: 'Crafting tactile stop-motion animations and games with soul. Where clay meets code.' },
-        { name: 'twitter:image', content: 'https://blichstudio.com/og-image.png' },
       ],
       link: [
         { rel: 'icon', type: 'image/svg+xml', href: '/icon.svg' },
         { rel: 'apple-touch-icon', href: '/apple-icon.png' },
+        {
+          rel: 'alternate',
+          type: 'application/rss+xml',
+          title: 'Blich Studio Workshop',
+          href: '/feed.xml',
+        },
         // Google Fonts
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
-        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
-        { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap' },
+        {
+          rel: 'preconnect',
+          href: 'https://fonts.gstatic.com',
+          crossorigin: '',
+        },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap',
+        },
       ],
       htmlAttrs: {
         lang: 'en',
@@ -50,7 +51,7 @@ export default defineNuxtConfig({
     apiUrl: process.env.NUXT_API_URL || process.env.NUXT_PUBLIC_API_URL || '',
     public: {
       // Client-side accessible
-      apiUrl: process.env.NUXT_PUBLIC_API_URL || ''
-    }
-  }
+      apiUrl: process.env.NUXT_PUBLIC_API_URL || '',
+    },
+  },
 })

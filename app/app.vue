@@ -1,8 +1,9 @@
 <template>
   <div>
     <NuxtRouteAnnouncer />
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <Navigation />
-    <main>
+    <main id="main-content" tabindex="-1">
       <NuxtPage />
     </main>
     <Footer />
@@ -14,7 +15,4 @@
 import Navigation from '@/components/Navigation.vue'
 import Footer from '@/components/Footer.vue'
 import SignInModal from '@/components/modal/SignInModal.vue'
-
-// Drives the chameleon-rotation accent system: sets body[data-page] per route
-usePageAccent()
 </script>

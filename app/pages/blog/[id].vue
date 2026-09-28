@@ -6,10 +6,10 @@ import Button from '~/components/ui/Button.vue'
 import Badge from '~/components/ui/Badge.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
-import { useRandomItemAccent } from '~/composables/useRandomAccent'
+
 import type { Article as ApiArticle } from '~/types/api'
 
-const tagAccent = useRandomItemAccent()
+definePageMeta({ key: route => route.path })
 
 interface DisplayArticle {
   id: string
@@ -41,7 +41,7 @@ function transformArticle(article: ApiArticle): DisplayArticle {
     title: article.title,
     excerpt: article.perex,
     content: article.content,
-    author: article.author?.displayName || 'Unknown',
+    author: article.author?.displayName || 'Blich Studio',
     authorBio: '', // Not available from API yet
     authorAvatar: article.author?.avatarUrl ?? undefined,
     publishedAt: article.publishedAt || article.createdAt,
@@ -64,6 +64,10 @@ const { data: article, error } = await useAsyncData(`article-${id}`, async () =>
   const result = await getArticle(id)
   return result ? transformArticle(result) : null
 })
+
+if (error.value) throw createError({ statusCode: 503, statusMessage: 'This page is temporarily unavailable. Please try again.' })
+if (!article.value) throw createError({ statusCode: 404, statusMessage: 'Page not found' })
+useEditorialSeo(() => article.value?.title || 'Page not found', () => article.value?.excerpt || 'Explore the work at Blich Studio.', () => article.value?.thumbnail, () => '/blog/' + article.value?.slug, true)
 
 const isLiked = ref(article.value?.isLiked || false)
 const likes = ref(article.value?.likes || 0)
@@ -108,13 +112,20 @@ async function handleLike() {
   }
 }
 
-function handleShare() {
-  if (navigator.share) {
-    navigator.share({
-      title: article.value?.title,
-      text: article.value?.excerpt,
-      url: window.location.href,
-    })
+const shareMessage = ref('')
+async function handleShare() {
+  const url = 'https://blichstudio.com/blog/' + article.value?.slug
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: article.value?.title, text: article.value?.excerpt, url })
+    } else {
+      await navigator.clipboard.writeText(url)
+      shareMessage.value = 'Link copied'
+    }
+  } catch (error) {
+    if (!(error instanceof Error && error.name === 'AbortError')) {
+      shareMessage.value = 'Copy the link from your address bar to share this note.'
+    }
   }
 }
 
@@ -143,7 +154,7 @@ watch(() => article.value?.content, async (content) => {
           icon="lucide:alert-circle"
           title="Something Went Wrong"
           :description="error?.message || 'We couldn\'t load this article. Please try again later.'"
-          action-label="Back to Blog"
+          action-label="Back to Workshop"
           action-to="/blog"
         />
       </div>
@@ -156,7 +167,7 @@ watch(() => article.value?.content, async (content) => {
           icon="lucide:file-x"
           title="Article Not Found"
           description="The article you're looking for doesn't exist or may have been removed."
-          action-label="Back to Blog"
+          action-label="Back to Workshop"
           action-to="/blog"
         />
       </div>
@@ -175,13 +186,13 @@ watch(() => article.value?.content, async (content) => {
         <div :class="$style.articleContainer">
           <NuxtLink to="/blog" :class="$style.backButton">
             <Icon name="lucide:arrow-left" :class="$style.backIcon" />
-            Back to Blog
+            Back to Workshop
           </NuxtLink>
 
           <article :class="$style.articleCard">
             <!-- Tags -->
             <div :class="$style.tags">
-              <Badge v-for="tag in article.tags" :key="tag" variant="secondary" :style="tagAccent('article:' + tag)">
+              <Badge v-for="tag in article.tags" :key="tag" variant="secondary">
                 {{ tag }}
               </Badge>
             </div>
@@ -218,6 +229,7 @@ watch(() => article.value?.content, async (content) => {
                 <Icon name="lucide:share" :class="$style.actionIcon" />
                 Share
               </Button>
+              <span v-if="shareMessage" role="status">{{ shareMessage }}</span>
             </div>
 
             <!-- Content -->

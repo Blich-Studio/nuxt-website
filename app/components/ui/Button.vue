@@ -70,7 +70,7 @@ const attrs = useAttrs()
 
 .variant-destructive {
   background-color: var(--destructive);
-  color: white;
+  color: var(--destructive-foreground);
 
   &:hover {
     opacity: 0.9;
