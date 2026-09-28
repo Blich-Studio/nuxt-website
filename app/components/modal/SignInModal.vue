@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 
 // Composables are auto-imported in Nuxt
 const { signIn, register } = useAuth()
@@ -12,6 +12,38 @@ const password = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const success = ref<string | null>(null)
+const modal = ref<HTMLElement>()
+let previousFocus: HTMLElement | null = null
+watch(show, async (visible) => {
+  if (visible) {
+    previousFocus = document.activeElement as HTMLElement | null
+    await nextTick()
+    modal.value?.querySelector<HTMLInputElement>('input')?.focus()
+  } else {
+    previousFocus?.focus()
+  }
+})
+function handleKey(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    close()
+    return
+  }
+  if (event.key !== 'Tab') return
+  const controls = modal.value?.querySelectorAll<HTMLElement>(
+    'button:not(:disabled), input:not(:disabled)',
+  )
+  if (!controls?.length) return
+  const first = controls[0]!
+  const last = controls[controls.length - 1]!
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
 
 function toggleMode() {
   mode.value = mode.value === 'signin' ? 'signup' : 'signin'
@@ -42,7 +74,8 @@ async function submit() {
         password: password.value,
         nickname: name.value.trim(),
       })
-      success.value = 'Account created. Check your email to verify, then sign in.'
+      success.value =
+        'Account created. Check your email to verify, then sign in.'
       mode.value = 'signin'
     } else {
       await signIn({ email: email.value.trim(), password: password.value })
@@ -58,38 +91,73 @@ async function submit() {
 
 <template>
   <div v-if="show" class="overlay" @click.self="close">
-    <div class="modal">
-      <button class="close-btn" @click="close">✕</button>
-      
-      <h2 class="title">{{ mode === 'signin' ? 'Sign In' : 'Create Account' }}</h2>
+    <div
+      ref="modal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="auth-title"
+      @keydown="handleKey"
+    >
+      <button aria-label="Close sign in" class="close-btn" @click="close">
+        ✕
+      </button>
+
+      <h2 id="auth-title" class="title">
+        {{ mode === 'signin' ? 'Sign In' : 'Create Account' }}
+      </h2>
 
       <form class="form" @submit.prevent="submit">
         <div v-if="mode === 'signup'" class="field">
-          <label class="label">Name</label>
-          <input v-model="name" type="text" class="input" required />
+          <label for="auth-name" class="label">Name</label>
+          <input
+            id="auth-name"
+            v-model="name"
+            type="text"
+            class="input"
+            required
+          />
         </div>
 
         <div class="field">
-          <label class="label">Email</label>
-          <input v-model="email" type="email" class="input" required />
+          <label for="auth-email" class="label">Email</label>
+          <input
+            id="auth-email"
+            v-model="email"
+            type="email"
+            class="input"
+            required
+          />
         </div>
 
         <div class="field">
-          <label class="label">Password</label>
-          <input v-model="password" type="password" class="input" required />
+          <label for="auth-password" class="label">Password</label>
+          <input
+            id="auth-password"
+            v-model="password"
+            type="password"
+            class="input"
+            required
+          />
         </div>
 
-        <div v-if="error" class="error">{{ error }}</div>
-        <div v-if="success" class="success">{{ success }}</div>
+        <div v-if="error" class="error" role="alert">{{ error }}</div>
+        <div v-if="success" class="success" role="status">{{ success }}</div>
 
         <button type="submit" class="submit-btn" :disabled="loading">
-          {{ loading ? 'Loading...' : (mode === 'signin' ? 'Sign In' : 'Sign Up') }}
+          {{
+            loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'
+          }}
         </button>
       </form>
 
       <div class="switch-mode">
         <button @click="toggleMode" class="switch-btn">
-          {{ mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in' }}
+          {{
+            mode === 'signin'
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'
+          }}
         </button>
       </div>
     </div>
@@ -117,6 +185,8 @@ async function submit() {
   padding: 2rem;
   width: 100%;
   max-width: 28rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
 
@@ -198,7 +268,7 @@ async function submit() {
   padding: 0.75rem;
   border-radius: 0.5rem;
   background-color: var(--sunset-orange, var(--clay-orange));
-  color: white;
+  color: var(--primary-foreground);
   font-weight: 500;
   border: none;
   cursor: pointer;

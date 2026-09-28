@@ -1,2 +1,3 @@
-User-Agent: *
-Disallow:
+User-agent: *
+Disallow: /api/
+Sitemap: https://blichstudio.com/sitemap.xml

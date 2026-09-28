@@ -1,490 +1,124 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import Badge from '../../components/ui/Badge.vue'
-import Button from '../../components/ui/Button.vue'
-import EmptyState from '../../components/ui/EmptyState.vue'
-import { useRouter } from 'vue-router'
-import { useRandomItemAccent } from '~/composables/useRandomAccent'
-import type { ArticleListItem, Tag } from '~/types/api'
-
-const tagAccent = useRandomItemAccent()
-
-// Transform API article to display format
-interface DisplayArticle {
-  id: string
-  slug: string
-  title: string
-  excerpt: string
-  author: string
-  authorAvatar?: string
-  publishedAt: string
-  readTime: number
-  thumbnail?: string
-  tags: string[]
-  likes: number
-}
-
-function transformArticle(article: ArticleListItem): DisplayArticle {
-  return {
-    id: article.id,
-    slug: article.slug,
-    title: article.title,
-    excerpt: article.perex,
-    author: article.author?.displayName || 'Unknown',
-    authorAvatar: article.author?.avatarUrl ?? undefined,
-    publishedAt: article.publishedAt || article.createdAt,
-    readTime: article.readTime || 5,
-    thumbnail: article.coverImageUrl ?? undefined,
-    tags: article.tags.map(t => t.name),
-    likes: article.likesCount || 0,
-  }
-}
-
-const { getArticles, getTags } = useArticles()
-
-const selectedTags = ref<string[]>([])
+import { listingPage } from '~/utils/editorial'
+const route = useRoute()
 const router = useRouter()
-
-const { data: blogData, error } = await useAsyncData('blog-list', async () => {
-  const [articlesResult, tagsResult] = await Promise.all([
-    getArticles(),
-    getTags(),
-  ])
-  return {
-    articles: articlesResult.articles.map(transformArticle),
-    tags: tagsResult.map(t => t.name).sort(),
-  }
-}, {
-  default: () => ({ articles: [] as DisplayArticle[], tags: [] as string[] }),
+const { getArticles, getTags } = useArticles()
+const page = computed(() => listingPage(route.query.page))
+const tag = computed(() =>
+  typeof route.query.tag === 'string' ? route.query.tag : '',
+)
+const search = computed(() =>
+  typeof route.query.search === 'string' ? route.query.search : '',
+)
+const input = ref(search.value)
+const selection = ref(tag.value)
+watch([search, tag], () => {
+  input.value = search.value
+  selection.value = tag.value
 })
-
-const articles = computed(() => blogData.value.articles)
-const allTags = computed(() => blogData.value.tags)
-
-function toggleTag(tag: string) {
-  selectedTags.value = selectedTags.value.includes(tag) ? selectedTags.value.filter((t) => t !== tag) : [...selectedTags.value, tag]
+const { data: tags } = await useAsyncData('workshop-tags', getTags, {
+  default: () => [],
+})
+const { data, error, status, refresh } = await useAsyncData(
+  () => 'articles-' + JSON.stringify([page.value, tag.value, search.value]),
+  () =>
+    getArticles(
+      { tags: tag.value || undefined, search: search.value || undefined },
+      { page: page.value, limit: 12, sort: 'publishedAt', order: 'desc' },
+    ),
+)
+function filter() {
+  router.push({
+    path: '/blog',
+    hash: '#results',
+    query: {
+      ...(input.value.trim() ? { search: input.value.trim() } : {}),
+      ...(selection.value ? { tag: selection.value } : {}),
+    },
+  })
 }
-
-function clearFilters() {
-  selectedTags.value = []
+function pageLink(value: number) {
+  return {
+    path: '/blog',
+    hash: '#results',
+    query: { ...route.query, page: String(value) },
+  }
 }
-
-const filteredArticles = computed(() => (selectedTags.value.length === 0 ? articles.value : articles.value.filter((a) => a.tags.some((tag) => selectedTags.value.includes(tag)))))
-
-const firstArticle = computed(() => (filteredArticles.value.length > 0 ? filteredArticles.value[0] : null))
-
-function openArticle(id: string) {
-  router.push(`/blog/${id}`)
-}
+useEditorialSeo(
+  () => 'Workshop' + (page.value > 1 ? ' — Page ' + page.value : ''),
+  'Development notes, making-of stories, and lessons from building games at Blich Studio.',
+  undefined,
+  () => '/blog' + (page.value > 1 ? '?page=' + page.value : ''),
+)
+useSeoMeta({
+  robots: () => (tag.value || search.value ? 'noindex,follow' : 'index,follow'),
+})
 </script>
-
 <template>
-  <div :class="$style.page">
-    <section :class="$style.hero">
-      <div :class="$style.heroContainer">
-        <h1 :class="$style.heroTitle">Our Blog</h1>
-        <p :class="$style.heroSubtitle">Insights, tutorials, and behind-the-scenes stories from our creative journey</p>
-      </div>
-    </section>
-
-    <section :class="$style.filterSection">
-      <div :class="$style.filterContainer">
-        <div :class="$style.filterHeader">
-          <Icon name="lucide:tag" :class="$style.filterIcon" />
-          <h2 :class="$style.filterTitle">Filter by Tags</h2>
-          <Button v-if="selectedTags.length > 0" variant="ghost" size="sm" :class="$style.clearButton" @click="clearFilters">Clear All</Button>
-        </div>
-        <div :class="$style.tagsList">
-          <Badge
-            v-for="tag in allTags"
-            :key="tag"
-            :class="[$style.tagBadge, selectedTags.includes(tag) && $style.tagBadgeActive]"
-            :variant="selectedTags.includes(tag) ? 'default' : 'outline'"
-            @click="() => toggleTag(tag)"
-          >{{ tag }}</Badge>
-        </div>
-      </div>
-    </section>
-
-    <section :class="$style.contentSection">
-      <div :class="$style.contentContainer">
-        <!-- Error State -->
-        <EmptyState
-          v-if="error"
-          icon="lucide:alert-circle"
-          title="Failed to Load Articles"
-          :description="error?.message || 'Failed to load articles'"
-          action-label="Try Again"
-          @action="() => $router.go(0)"
+  <div class="layout-shell">
+    <header class="editorial-intro">
+      <p class="eyebrow">WORKSHOP / NOTES FROM THE PROCESS</p>
+      <h1>
+        How it’s made.<br /><span class="text-accent">What we learn.</span>
+      </h1>
+      <p>
+        Development notes, making-of stories, and the decisions behind the work.
+      </p>
+      <a class="text-link" href="/feed.xml">Follow new notes via RSS ↗</a>
+    </header>
+    <form class="listing-toolbar" @submit.prevent="filter">
+      <label
+        >Find a note<input
+          v-model="input"
+          type="search"
+          placeholder="Search the workshop"
+          maxlength="200" /></label
+      ><label v-if="tags.length"
+        >Topic<select v-model="selection">
+          <option value="">All topics</option>
+          <option v-for="item in tags" :key="item.id" :value="item.slug">
+            {{ item.name }}
+          </option>
+        </select></label
+      ><button class="studio-button" type="submit">Search →</button
+      ><NuxtLink v-if="search || tag" to="/blog" class="text-link"
+        >Clear filters</NuxtLink
+      >
+    </form>
+    <div v-if="error" id="results" class="notice" role="alert">
+      <p>The workshop notes could not load. Please try again.</p>
+      <button class="quiet-button" @click="refresh()">Try again →</button>
+    </div>
+    <div v-else id="results" :aria-busy="status === 'pending'">
+      <p class="listing-summary" role="status">
+        {{ data?.meta.total || 0 }}
+        {{ data?.meta.total === 1 ? 'note' : 'notes' }} · Page {{ page }}
+      </p>
+      <div v-if="data?.articles.length" class="notes-grid">
+        <ArticleCard
+          v-for="article in data.articles"
+          :key="article.id"
+          :article="article"
         />
-
-        <template v-else>
-          <div v-if="firstArticle">
-            <div :class="$style.featuredCard" @click="openArticle(firstArticle.id)">
-              <div :class="$style.featuredGrid">
-                <div :class="$style.featuredImageWrapper">
-                  <img :src="firstArticle.thumbnail || '/placeholder.svg'" :alt="firstArticle.title" :class="$style.featuredImage" />
-                </div>
-                <div :class="$style.featuredContent">
-                  <Badge :class="$style.featuredBadge">Featured</Badge>
-                  <h2 :class="$style.featuredTitle">{{ firstArticle.title }}</h2>
-                  <p :class="$style.featuredExcerpt">{{ firstArticle.excerpt }}</p>
-                  <div :class="$style.featuredTags">
-                    <Badge v-for="tag in firstArticle.tags" :key="tag" variant="secondary" :class="$style.tagSmall" :style="tagAccent('featured:' + firstArticle.id + ':' + tag)">{{ tag }}</Badge>
-                  </div>
-                  <div :class="$style.featuredMeta">
-                    <div :class="$style.metaItem"><Icon name="lucide:calendar" :class="$style.metaIcon" /> {{ new Date(firstArticle.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) }}</div>
-                    <div :class="$style.metaItem"><Icon name="lucide:clock" :class="$style.metaIcon" /> {{ firstArticle.readTime }} min read</div>
-                    <div :class="$style.metaItem"><Icon name="lucide:heart" :class="$style.metaIcon" /> {{ firstArticle.likes }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div :class="$style.articlesGrid">
-              <div v-for="article in filteredArticles.slice(1)" :key="article.id" :class="$style.articleCard" @click="openArticle(article.id)">
-                <div :class="$style.articleImageWrapper">
-                  <img :src="article.thumbnail || '/placeholder.svg'" :alt="article.title" :class="$style.articleImage" />
-                </div>
-                <div :class="$style.articleContent">
-                  <h3 :class="$style.articleTitle">{{ article.title }}</h3>
-                  <p :class="$style.articleExcerpt">{{ article.excerpt }}</p>
-                  <div :class="$style.articleTags">
-                    <Badge v-for="tag in article.tags.slice(0,2)" :key="tag" variant="secondary" :class="$style.tagSmall" :style="tagAccent(article.id + ':' + tag)">{{ tag }}</Badge>
-                  </div>
-                  <div :class="$style.articleMeta">
-                    <div :class="$style.metaItem"><Icon name="lucide:clock" :class="$style.metaIcon" /> {{ article.readTime }} min</div>
-                    <div :class="$style.metaItem"><Icon name="lucide:heart" :class="$style.metaIcon" /> {{ article.likes }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div v-else :class="$style.emptyStateWrapper">
-            <EmptyState
-              icon="lucide:search-x"
-              title="No articles found"
-              description="No articles match your selected tags. Try adjusting your filters."
-              action-label="Clear Filters"
-              @action="clearFilters"
-            />
-          </div>
-        </template>
       </div>
-    </section>
+      <div v-else class="notice">
+        <h2>No notes found.</h2>
+        <p>Try another search or browse all workshop notes.</p>
+        <NuxtLink to="/blog" class="text-link">All notes →</NuxtLink>
+      </div>
+      <nav
+        v-if="page > 1 || data?.meta.hasNext"
+        class="pagination"
+        aria-label="Workshop pages"
+      >
+        <NuxtLink v-if="page > 1" :to="pageLink(page - 1)">← Previous</NuxtLink
+        ><span
+          >Page {{ page }} of
+          {{ Math.max(1, data?.meta.totalPages || 0) }}</span
+        ><NuxtLink v-if="data?.meta.hasNext" :to="pageLink(page + 1)"
+          >Next →</NuxtLink
+        >
+      </nav>
+    </div>
   </div>
 </template>
-
-<style lang="scss" module>
-@use '../../assets/styles/variables' as *;
-
-.page {
-  min-height: 100vh;
-}
-
-.hero {
-  padding: 5rem 1rem;
-  background: linear-gradient(to bottom, color-mix(in oklch, var(--sunset-sky) 20%, transparent), $color-background);
-}
-
-.heroContainer {
-  max-width: 80rem;
-  margin: 0 auto;
-  text-align: center;
-}
-
-.heroTitle {
-  font-family: $font-display;
-  font-size: clamp(3rem, 8vw, $text-7xl);
-  font-weight: 700;
-  margin-bottom: 1.5rem;
-  text-wrap: balance;
-}
-
-.heroSubtitle {
-  font-size: $text-xl;
-  color: $color-muted-foreground;
-  max-width: 48rem;
-  margin: 0 auto;
-  text-wrap: balance;
-}
-
-.filterSection {
-  padding: 2rem 1rem;
-  border-bottom: 1px solid $color-border;
-  position: sticky;
-  top: 4rem;
-  background-color: color-mix(in oklch, var(--background) 95%, transparent);
-  backdrop-filter: blur(12px);
-  z-index: 40;
-
-  @media (min-width: $breakpoint-md) {
-    top: 5rem;
-  }
-}
-
-.filterContainer {
-  max-width: 80rem;
-  margin: 0 auto;
-}
-
-.filterHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.filterIcon {
-  width: 1.25rem;
-  height: 1.25rem;
-  color: var(--sunset-orange);
-}
-
-.filterTitle {
-  font-weight: 600;
-}
-
-.clearButton {
-  margin-left: auto;
-  font-size: $text-xs;
-}
-
-.tagsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.tagBadge {
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.tagBadgeActive {
-  background-color: var(--sunset-orange);
-  color: white;
-
-  &:hover {
-    background-color: var(--sunset-deep);
-  }
-}
-
-.contentSection {
-  padding: 4rem 1rem;
-}
-
-.contentContainer {
-  max-width: 80rem;
-  margin: 0 auto;
-}
-
-.emptyStateWrapper {
-  grid-column: 1 / -1;
-}
-
-.featuredCard {
-  margin-bottom: 4rem;
-  border-radius: 1rem;
-  overflow: hidden;
-  background-color: $color-card;
-  border: 1px solid $color-border;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: color-mix(in oklch, var(--sunset-orange) 50%, transparent);
-    box-shadow: 0 20px 25px -5px color-mix(in oklch, var(--sunset-orange) 10%, transparent);
-  }
-
-  &:hover .featuredImage {
-    transform: scale(1.1);
-  }
-
-  &:hover .featuredTitle {
-    color: var(--sunset-orange);
-  }
-}
-
-.featuredGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.featuredImageWrapper {
-  aspect-ratio: 16 / 9;
-  position: relative;
-  overflow: hidden;
-  background-color: var(--muted);
-
-  @media (min-width: $breakpoint-md) {
-    aspect-ratio: auto;
-  }
-}
-
-.featuredImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.featuredContent {
-  padding: 2rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.featuredBadge {
-  width: fit-content;
-  margin-bottom: 1rem;
-  background-color: color-mix(in oklch, var(--sunset-orange) 10%, transparent);
-  color: var(--sunset-orange);
-  border-color: color-mix(in oklch, var(--sunset-orange) 20%, transparent);
-}
-
-.featuredTitle {
-  font-family: $font-display;
-  font-size: $text-3xl;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  transition: color 0.3s ease;
-  text-wrap: balance;
-}
-
-.featuredExcerpt {
-  color: $color-muted-foreground;
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.featuredTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.tagSmall {
-  font-size: $text-xs;
-}
-
-.featuredMeta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 1.5rem;
-  font-size: $text-sm;
-  color: $color-muted-foreground;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.metaIcon {
-  width: 1rem;
-  height: 1rem;
-  opacity: 0.7;
-}
-
-.articlesGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 2rem;
-
-  @media (min-width: $breakpoint-md) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (min-width: $breakpoint-lg) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.articleCard {
-  border-radius: 0.75rem;
-  overflow: hidden;
-  background-color: $color-card;
-  border: 1px solid $color-border;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    border-color: color-mix(in oklch, var(--sunset-orange) 50%, transparent);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-
-  &:hover .articleImage {
-    transform: scale(1.1);
-  }
-
-  &:hover .articleTitle {
-    color: var(--sunset-orange);
-  }
-}
-
-.articleImageWrapper {
-  aspect-ratio: 16 / 9;
-  position: relative;
-  overflow: hidden;
-  background-color: var(--muted);
-}
-
-.articleImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.5s ease;
-}
-
-.articleContent {
-  padding: 1.5rem;
-}
-
-.articleTitle {
-  font-family: $font-display;
-  font-size: $text-xl;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  transition: color 0.3s ease;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.articleExcerpt {
-  color: $color-muted-foreground;
-  font-size: $text-sm;
-  margin-bottom: 1rem;
-  line-height: 1.6;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.articleTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.articleMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: $text-xs;
-  color: $color-muted-foreground;
-}
-</style>

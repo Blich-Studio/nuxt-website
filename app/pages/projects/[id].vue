@@ -5,10 +5,10 @@ import { useRoute } from 'vue-router'
 import Badge from '~/components/ui/Badge.vue'
 import EmptyState from '~/components/ui/EmptyState.vue'
 import CommentSection from '~/components/CommentSection.vue'
-import { useRandomItemAccent } from '~/composables/useRandomAccent'
+
 import type { Project as ApiProject, LinkedArticle } from '~/types/api'
 
-const tagAccent = useRandomItemAccent()
+definePageMeta({ key: route => route.path })
 
 interface DisplayProject {
   id: string
@@ -84,6 +84,10 @@ const renderedShortDescription = computed(() =>
   project.value?.shortDescription ? renderMarkdown(project.value.shortDescription, true) : ''
 )
 
+if (error.value) throw createError({ statusCode: 503, statusMessage: 'This page is temporarily unavailable. Please try again.' })
+if (!project.value) throw createError({ statusCode: 404, statusMessage: 'Page not found' })
+useEditorialSeo(() => project.value?.title || 'Page not found', () => project.value?.shortDescription || 'Explore the work at Blich Studio.', () => project.value?.thumbnail, () => '/projects/' + project.value?.slug, false)
+
 const isLiked = ref(project.value?.isLiked || false)
 const likes = ref(project.value?.likes || 0)
 const isLiking = ref(false)
@@ -148,7 +152,7 @@ async function handleLike() {
           icon="lucide:folder-x"
           title="Project Not Found"
           description="The project you're looking for doesn't exist or may have been removed."
-          action-label="Browse All Projects"
+          action-label="Browse Games & Experiments"
           action-to="/projects"
         />
       </template>
@@ -158,7 +162,7 @@ async function handleLike() {
         <div :class="$style.projectSection">
           <div :class="$style.typeLabel">{{ typeLabels[project.type] || 'Project' }}</div>
           <h1 :class="$style.title">{{ project.title }}</h1>
-          <div :class="$style.meta">{{ new Date(project.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }} • {{ likes }} likes</div>
+          <div :class="$style.meta">{{ new Date(project.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) }}</div>
           <p v-if="project.shortDescription" :class="$style.shortDescription" v-html="renderedShortDescription" />
 
           <!-- Project Links -->
@@ -169,11 +173,11 @@ async function handleLike() {
             </a>
             <a v-if="project.itchioUrl" :href="project.itchioUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="View on itch.io">
               <Icon name="simple-icons:itchdotio" :class="$style.linkIcon" />
-              <span>itch.io</span>
+              <span>View on itch.io ↗</span>
             </a>
             <a v-if="project.steamUrl" :href="project.steamUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="View on Steam">
               <Icon name="simple-icons:steam" :class="$style.linkIcon" />
-              <span>Steam</span>
+              <span>View on Steam ↗</span>
             </a>
             <a v-if="project.youtubeUrl" :href="project.youtubeUrl" target="_blank" rel="noopener noreferrer" :class="$style.linkButton" title="Watch on YouTube">
               <Icon name="simple-icons:youtube" :class="$style.linkIcon" />
@@ -187,7 +191,7 @@ async function handleLike() {
 
           <div :class="$style.tagsSection">
             <div :class="$style.tagsList">
-              <Badge v-for="tag in project.tags" :key="tag" variant="secondary" :style="tagAccent('detail:' + tag)">{{ tag }}</Badge>
+              <Badge v-for="tag in project.tags" :key="tag" variant="secondary">{{ tag }}</Badge>
             </div>
           </div>
         </div>

@@ -1,302 +1,140 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
-import Button from './ui/Button.vue'
-import { useRandomLetterColor, randomFamily, familyVar } from '~/composables/useRandomAccent'
-
-const letterColor = useRandomLetterColor()
-
-const scrollY = ref(0)
-const isMobileMenuOpen = ref(false)
 const route = useRoute()
-
-const isScrolled = computed(() => scrollY.value > 50)
-// Hide logo only on homepage until past hero; always show on other pages.
-const showLogo = computed(() => route.path !== '/' || scrollY.value > 400)
-
-// Composables are auto-imported in Nuxt
-const { user, signOut, showAuthModal } = useAuth()
-
-onMounted(() => {
-  const handleScroll = () => {
-    scrollY.value = window.scrollY
-  }
-  window.addEventListener('scroll', handleScroll)
-  handleScroll() // Initial check
-
-  onBeforeUnmount(() => {
-    window.removeEventListener('scroll', handleScroll)
-  })
-})
-
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/projects', label: 'Projects' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: 'About' }
+const open = ref(false)
+const toggle = ref<HTMLButtonElement>()
+const links = [
+  { to: '/projects', label: 'Games' },
+  { to: '/blog', label: 'Workshop' },
+  { to: '/about', label: 'About' },
 ]
+watch(
+  () => route.fullPath,
+  () => {
+    open.value = false
+  },
+)
+function closeMenu() {
+  open.value = false
+  toggle.value?.focus()
+}
 </script>
-
 <template>
-  <nav :class="[$style.nav, isScrolled && $style.navScrolled, isMobileMenuOpen && $style.navMobileOpen]">
-    <div :class="$style.container">
-      <div :class="$style.inner">
-        <!-- Logo — each letter picks its own random family color per visit -->
-        <NuxtLink to="/" :class="[$style.logo, showLogo && $style.logoVisible]">
-          <span :class="$style.logoText">
-            <span
-              v-for="(ch, i) in 'BLICH'"
-              :key="'b' + i"
-              :style="{ color: letterColor(route.path + ':b:' + i) }"
-            >{{ ch }}</span>
-          </span>
-          <span :class="$style.logoAccent">
-            <span
-              v-for="(ch, i) in 'STUDIO'"
-              :key="'s' + i"
-              :style="{ color: letterColor(route.path + ':s:' + i) }"
-            >{{ ch }}</span>
-          </span>
-        </NuxtLink>
-
-        <!-- Desktop Navigation -->
-        <div :class="$style.desktopNav">
-          <NuxtLink
-            v-for="link in navLinks"
-            :key="link.href"
-            :to="link.href"
-            :class="[$style.navLink, route.path === link.href && $style.navLinkActive]"
-          >
-            {{ link.label }}
-          </NuxtLink>
-
-          <!-- Auth -->
-          <template v-if="user && user.userId">
-            <div :class="$style.authSection">
-              <span :class="$style.greeting">Hello, {{ user.name }}</span>
-              <Button size="sm" variant="outline" @click="signOut" :class="$style.authButton">
-                <Icon name="lucide:log-out" :class="$style.buttonIcon" />
-                Sign Out
-              </Button>
-            </div>
-          </template>
-          <template v-else>
-            <Button size="sm" variant="outline" @click="showAuthModal" :class="$style.authButton">
-              <Icon name="lucide:user" :class="$style.buttonIcon" />
-              Sign In
-            </Button>
-          </template>
-        </div>
-
-        <!-- Mobile Menu Button -->
-        <button :class="$style.mobileMenuButton" @click="isMobileMenuOpen = !isMobileMenuOpen">
-          <Icon v-if="isMobileMenuOpen" name="lucide:x" :class="$style.menuIcon" />
-          <Icon v-else name="lucide:menu" :class="$style.menuIcon" />
-        </button>
-      </div>
-
-      <!-- Mobile Menu -->
-      <div v-if="isMobileMenuOpen" :class="$style.mobileMenu">
+  <header class="site-header" @keydown.esc="closeMenu">
+    <div class="layout-shell nav-bar">
+      <NuxtLink to="/" class="wordmark" aria-label="Blich Studio home"
+        >BLICH<span class="brand-star" aria-hidden="true">✱</span
+        ><small>STUDIO</small></NuxtLink
+      >
+      <button
+        ref="toggle"
+        class="menu-toggle"
+        type="button"
+        :aria-expanded="open"
+        aria-controls="site-navigation"
+        @click="open = !open"
+      >
+        {{ open ? 'Close' : 'Menu' }}
+        <span aria-hidden="true">{{ open ? '−' : '+' }}</span>
+      </button>
+      <nav
+        id="site-navigation"
+        aria-label="Main navigation"
+        :class="['site-nav', { 'is-open': open }]"
+      >
         <NuxtLink
-          v-for="link in navLinks"
-          :key="link.href"
-          :to="link.href"
-          :class="[$style.mobileNavLink, route.path === link.href && $style.navLinkActive]"
-          @click="isMobileMenuOpen = false"
+          v-for="link in links"
+          :key="link.to"
+          :to="link.to"
+          :aria-current="route.path.startsWith(link.to) ? 'page' : undefined"
+          >{{ link.label }}</NuxtLink
         >
-          {{ link.label }}
-        </NuxtLink>
-        <template v-if="user && user.userId">
-          <div :class="$style.mobileGreeting">Hello, {{ user.name }}</div>
-          <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="signOut">
-            <Icon name="lucide:log-out" :class="$style.buttonIcon" />
-            Sign Out
-          </Button>
-        </template>
-        <template v-else>
-          <Button size="sm" variant="outline" :class="$style.mobileAuthButton" @click="showAuthModal">
-            <Icon name="lucide:user" :class="$style.buttonIcon" />
-            Sign In
-          </Button>
-        </template>
-      </div>
+        <a class="nav-contact" href="mailto:filip@blichstudio.com"
+          >Say hello <span aria-hidden="true">↗</span></a
+        >
+      </nav>
     </div>
-  </nav>
+  </header>
 </template>
-
-<style lang="scss" module>
-@use '../assets/styles/variables' as *;
-
-.nav {
-  position: fixed;
+<style scoped>
+.site-header {
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 50;
-  transition: all 0.3s ease;
-  background-color: transparent;
-}
-
-.navScrolled {
-  backdrop-filter: blur(12px);
+  background: var(--background);
   border-bottom: 1px solid var(--border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  background-color: color-mix(in oklch, var(--background) 95%, transparent);
 }
-
-.navMobileOpen {
-  background-color: var(--background);
-}
-
-:global(body.article-detail) .nav,
-:global(body.project-detail) .nav {
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  background-color: var(--background);
-}
-
-.container {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 0 1rem;
-}
-
-.inner {
+.nav-bar {
+  min-height: 88px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  height: 4rem;
-
-  @media (min-width: $breakpoint-md) {
-    height: 5rem;
-  }
-}
-
-.logo {
-  font-family: $font-display;
-  font-size: 1.25rem;
-  font-weight: 700;
-  transition: all 0.7s ease;
-  opacity: 0;
-  filter: blur(16px);
-  pointer-events: none;
-
-  @media (min-width: $breakpoint-md) {
-    font-size: 1.5rem;
-  }
-}
-
-.logoVisible {
-  opacity: 1;
-  filter: blur(0);
-  pointer-events: auto;
-}
-
-.logoText {
-  color: $color-foreground;
-}
-
-.logoAccent {
-  color: $color-clay-orange;
-}
-
-.desktopNav {
-  display: none;
   align-items: center;
   gap: 2rem;
-
-  @media (min-width: $breakpoint-md) {
+}
+.wordmark {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  font: 800 1.8rem var(--font-display);
+  letter-spacing: -0.07em;
+}
+.wordmark small {
+  font: 500 0.65rem var(--font-mono);
+  letter-spacing: 0.12em;
+  align-self: end;
+  margin: 0 0 0.4rem 0.25rem;
+}
+.brand-star {
+  color: var(--primary);
+  font-size: 2.1rem;
+}
+.site-nav {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+.site-nav a {
+  padding: 0.7rem 0;
+}
+.site-nav a:hover,
+.site-nav a[aria-current] {
+  color: var(--primary);
+}
+.nav-contact {
+  border-left: 1px solid var(--border);
+  padding-left: 2rem !important;
+}
+.menu-toggle {
+  display: none;
+}
+@media (max-width: 640px) {
+  .nav-bar {
+    min-height: 72px;
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .menu-toggle {
+    display: block;
+    padding: 0.8rem 0 0.8rem 1rem;
+    border: 0;
+    background: none;
+    color: var(--foreground);
+    font: inherit;
+  }
+  .site-nav {
+    display: none;
+    flex-basis: 100%;
+    padding: 1rem 0 1.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.3rem;
+  }
+  .site-nav.is-open {
     display: flex;
   }
-}
-
-.navLink {
-  font-size: $text-sm;
-  font-weight: 500;
-  color: $color-muted-foreground;
-  transition: color 0.2s ease;
-
-  &:hover {
-    color: $color-clay-orange;
+  .nav-contact {
+    border-left: 0;
+    padding-left: 0 !important;
   }
-}
-
-.navLinkActive {
-  color: $color-clay-orange;
-}
-
-.icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-.authSection {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.greeting {
-  font-size: $text-sm;
-  color: $color-muted-foreground;
-}
-
-.authButton {
-  border-radius: 9999px;
-}
-
-.buttonIcon {
-  width: 1rem;
-  height: 1rem;
-  margin-right: 0.5rem;
-}
-
-.mobileMenuButton {
-  display: block;
-  padding: 0.5rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: $color-foreground;
-
-  @media (min-width: $breakpoint-md) {
-    display: none;
-  }
-}
-
-.menuIcon {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.mobileMenu {
-  display: block;
-  padding: 1rem 0;
-  border-top: 1px solid $color-border;
-
-  @media (min-width: $breakpoint-md) {
-    display: none;
-  }
-}
-
-.mobileNavLink {
-  display: block;
-  padding: 0.75rem 0;
-  font-size: $text-sm;
-  font-weight: 500;
-  color: $color-muted-foreground;
-  transition: color 0.2s ease;
-}
-
-.mobileGreeting {
-  padding: 0.75rem 0;
-  font-size: $text-sm;
-  color: $color-muted-foreground;
-}
-
-.mobileAuthButton {
-  width: 100%;
-  margin-top: 0.5rem;
-  background: transparent;
 }
 </style>
