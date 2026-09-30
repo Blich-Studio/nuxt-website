@@ -38,8 +38,8 @@ function closeMenu() {
           :aria-current="route.path.startsWith(link.to) ? 'page' : undefined"
           >{{ link.label }}</NuxtLink
         >
-        <a class="nav-contact" href="mailto:filip@blichstudio.com"
-          >Say hello <span aria-hidden="true">↗</span></a
+        <NuxtLink class="nav-contact" to="/contact" :aria-current="route.path === '/contact' ? 'page' : undefined"
+          >Say hello <span aria-hidden="true">↗</span></NuxtLink
         >
       </nav>
       <div class="nav-actions">
