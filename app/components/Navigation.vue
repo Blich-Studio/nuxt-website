@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
+const letterColor = useRandomLetterColor()
 const { user, loading, signOut, showAuthModal } = useAuth()
 const open = ref(false)
 const toggle = ref<HTMLButtonElement>()
@@ -23,7 +24,7 @@ function closeMenu() {
   <header class="site-header" @keydown.esc="closeMenu">
     <div class="layout-shell nav-bar">
       <NuxtLink to="/" class="wordmark" aria-label="Blich Studio home"
-        >BLICH<span class="brand-star" aria-hidden="true">✱</span
+        ><span class="wordmark-letters"><span v-for="(letter, index) in 'BLICH'" :key="index" :style="{ color: letterColor(route.path + ':' + index) }">{{ letter }}</span></span><span class="brand-star" aria-hidden="true">✱</span
         ><small>STUDIO</small></NuxtLink
       >
       <nav
@@ -136,8 +137,9 @@ function closeMenu() {
   cursor: pointer;
 }
 .nav-sign-in:hover {
-  background: var(--primary);
-  color: var(--background);
+  background: var(--accent-secondary);
+  color: var(--accent-secondary-on);
+  border-color: var(--accent-secondary);
 }
 .nav-sign-in:disabled { opacity: 0.6; cursor: wait; }
 .menu-toggle {

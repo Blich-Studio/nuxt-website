@@ -15,4 +15,6 @@
 import Navigation from '@/components/Navigation.vue'
 import Footer from '@/components/Footer.vue'
 import SignInModal from '@/components/modal/SignInModal.vue'
+
+usePageAccent()
 </script>

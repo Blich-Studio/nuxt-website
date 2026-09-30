@@ -4,8 +4,8 @@ import { applyRandomPageAccent } from './useRandomAccent'
  * usePageAccent — sets body[data-page] based on the current route, then
  * applies a random accent pair on every route change (client-only).
  *
- * Server-rendered HTML uses the deterministic body[data-page] rotation map
- * defined in main.scss. Post-hydration on the client, we overwrite with a
+ * Server-rendered HTML uses the default readable palette in main.scss.
+ * Post-hydration on the client, we overwrite with a
  * random family pair so the user "never knows what color they get" —
  * chameleon-graffiti unpredictability within the curated family.
  *
@@ -17,6 +17,7 @@ export function usePageAccent() {
   const pageKey = computed<string>(() => {
     const path = route.path
     if (path === '/') return 'home'
+    if (path === '/contact') return 'contact'
     if (path === '/about') return 'about'
     if (path === '/projects') return 'projects'
     if (path.startsWith('/projects/')) return 'project-detail'

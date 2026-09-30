@@ -1,6 +1,17 @@
 @use './variables' as *;
 @use './utilities' as *;
 :root {
+  /* Original rotating color families, tuned for readable text on the dark canvas. */
+  --family-lime: #d4ee6a;
+  --family-magenta: #f094ca;
+  --family-cyan: #70d9ee;
+  --family-oxblood: #f28d83;
+  --family-marigold: #bdadff;
+  --family-lime-on: #161914;
+  --family-magenta-on: #161914;
+  --family-cyan-on: #161914;
+  --family-oxblood-on: #161914;
+  --family-marigold-on: #161914;
   color-scheme: dark;
   --background: #161914;
   --foreground: #f1f0e8;
@@ -377,3 +388,11 @@ textarea {
     scroll-behavior: auto !important;
   }
 }
+
+/* Hover and keyboard focus share the restored secondary accent. */
+.studio-button:hover, .studio-button:focus-visible {
+  background: var(--accent-secondary);
+  color: var(--accent-secondary-on);
+  border-color: var(--accent-secondary);
+}
+.text-link:hover, .text-link:focus-visible { color: var(--accent-secondary); }
