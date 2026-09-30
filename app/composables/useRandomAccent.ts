@@ -23,8 +23,8 @@ export function randomFamily(exclude?: FamilyName): FamilyName {
 /**
  * Pick two distinct family names as a [primary, secondary] pair.
  */
-export function randomFamilyPair(): [FamilyName, FamilyName] {
-  const primary = randomFamily()
+export function randomFamilyPair(exclude?: FamilyName): [FamilyName, FamilyName] {
+  const primary = randomFamily(exclude)
   const secondary = randomFamily(primary)
   return [primary, secondary]
 }
@@ -45,13 +45,19 @@ export function familyOnVar(name: FamilyName): string {
 
 /**
  * Apply a random primary + secondary accent pair to <body>.
- * Overrides the CSS rotation defined via body[data-page='...'].
+ * Updates both current and legacy tokens so every component follows the palette.
  * Client-only — safe to call from onMounted.
  */
 export function applyRandomPageAccent(): void {
   if (typeof document === 'undefined') return
-  const [primary, secondary] = randomFamilyPair()
+  const previous = document.body.dataset.accentFamily as FamilyName | undefined
+  const [primary, secondary] = randomFamilyPair(previous)
+  document.body.dataset.accentFamily = primary
   const s = document.body.style
+  s.setProperty('--primary', familyVar(primary))
+  s.setProperty('--primary-foreground', familyOnVar(primary))
+  s.setProperty('--ring', familyVar(primary))
+  s.setProperty('--link', familyVar(primary))
   s.setProperty('--accent-primary', familyVar(primary))
   s.setProperty('--accent-primary-on', familyOnVar(primary))
   s.setProperty('--accent-secondary', familyVar(secondary))
