@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const route = useRoute()
+const { user, loading, signOut, showAuthModal } = useAuth()
 const open = ref(false)
 const toggle = ref<HTMLButtonElement>()
 const links = [
@@ -25,17 +26,6 @@ function closeMenu() {
         >BLICH<span class="brand-star" aria-hidden="true">✱</span
         ><small>STUDIO</small></NuxtLink
       >
-      <button
-        ref="toggle"
-        class="menu-toggle"
-        type="button"
-        :aria-expanded="open"
-        aria-controls="site-navigation"
-        @click="open = !open"
-      >
-        {{ open ? 'Close' : 'Menu' }}
-        <span aria-hidden="true">{{ open ? '−' : '+' }}</span>
-      </button>
       <nav
         id="site-navigation"
         aria-label="Main navigation"
@@ -52,6 +42,28 @@ function closeMenu() {
           >Say hello <span aria-hidden="true">↗</span></a
         >
       </nav>
+      <div class="nav-actions">
+        <button
+          type="button"
+          class="nav-sign-in"
+          :disabled="loading"
+          :aria-haspopup="user?.userId ? undefined : 'dialog'"
+          @click="user?.userId ? signOut() : showAuthModal()"
+        >
+          {{ user?.userId ? 'Sign out' : 'Sign in' }}
+        </button>
+        <button
+          ref="toggle"
+          class="menu-toggle"
+          type="button"
+          :aria-expanded="open"
+          aria-controls="site-navigation"
+          @click="open = !open"
+        >
+          {{ open ? 'Close' : 'Menu' }}
+          <span aria-hidden="true">{{ open ? '−' : '+' }}</span>
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -68,7 +80,7 @@ function closeMenu() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 2rem;
+  gap: 1.5rem;
 }
 .wordmark {
   display: flex;
@@ -89,7 +101,8 @@ function closeMenu() {
 }
 .site-nav {
   display: flex;
-  gap: 2.5rem;
+  gap: 2rem;
+  margin-left: auto;
   align-items: center;
   font-size: 0.9rem;
 }
@@ -104,10 +117,33 @@ function closeMenu() {
   border-left: 1px solid var(--border);
   padding-left: 2rem !important;
 }
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+.nav-sign-in {
+  padding: 0.65rem 1rem;
+  border: 1px solid var(--primary);
+  border-radius: 0.35rem;
+  background: transparent;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.nav-sign-in:hover {
+  background: var(--primary);
+  color: var(--background);
+}
+.nav-sign-in:disabled { opacity: 0.6; cursor: wait; }
 .menu-toggle {
   display: none;
 }
-@media (max-width: 640px) {
+@media (max-width: 800px) {
   .nav-bar {
     min-height: 72px;
     flex-wrap: wrap;
@@ -115,7 +151,7 @@ function closeMenu() {
   }
   .menu-toggle {
     display: block;
-    padding: 0.8rem 0 0.8rem 1rem;
+    padding: 0.8rem 0;
     border: 0;
     background: none;
     color: var(--foreground);
@@ -124,6 +160,7 @@ function closeMenu() {
   .site-nav {
     display: none;
     flex-basis: 100%;
+    order: 3;
     padding: 1rem 0 1.5rem;
     flex-direction: column;
     align-items: stretch;
@@ -136,5 +173,11 @@ function closeMenu() {
     border-left: 0;
     padding-left: 0 !important;
   }
+}
+@media (max-width: 380px) {
+  .wordmark { font-size: 1.5rem; }
+  .wordmark small { display: none; }
+  .nav-actions { gap: 0.75rem; }
+  .nav-sign-in { padding: 0.6rem 0.75rem; }
 }
 </style>
