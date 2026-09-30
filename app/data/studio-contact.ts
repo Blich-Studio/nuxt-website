@@ -4,10 +4,10 @@ export interface StudioLink {
   description: string
 }
 
-// Confirm these destinations before publishing the contact-page release.
-export const studioEmail = ''
-export const studioDiscord = ''
-export const studioItchio = ''
+// Studio contact destinations confirmed by Filip on 2026-09-30.
+export const studioEmail = 'filip@blichstudio.com'
+export const studioDiscord = 'https://discord.gg/Wsem6Fnw8e'
+export const studioItchio = 'https://blich-studio.itch.io/'
 
 export const studioSocialLinks: StudioLink[] = [
   { name: 'YouTube', href: 'https://www.youtube.com/@blichstudio.prague', description: 'Videos from the studio and the work behind the games.' },
