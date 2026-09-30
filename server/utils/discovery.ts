@@ -79,7 +79,7 @@ export function renderSitemap(
   projects: PublicEntry[],
   articles: PublicEntry[],
 ): string {
-  const locations = ['/', '/projects', '/blog', '/about'].map(
+  const locations = ['/', '/projects', '/blog', '/about', '/contact'].map(
     (path) => `<url><loc>${siteUrl}${path}</loc></url>`,
   )
   for (const [section, entries] of [

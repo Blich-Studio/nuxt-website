@@ -65,8 +65,8 @@ useEditorialSeo(
     <section class="contact-panel">
       <p class="eyebrow">COMPARE NOTES / ASK A QUESTION / SAY HELLO</p>
       <h2>Let’s talk about making things.</h2>
-      <a class="studio-button" href="mailto:filip@blichstudio.com"
-        >filip@blichstudio.com <span aria-hidden="true">↗</span></a
+      <NuxtLink class="studio-button" to="/contact"
+        >Contact the studio <span aria-hidden="true">↗</span></NuxtLink
       >
     </section>
   </div>

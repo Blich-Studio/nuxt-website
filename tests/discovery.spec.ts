@@ -47,6 +47,7 @@ describe('public discovery', () => {
     expect(xml).toContain('/projects/game-14</loc>')
     expect(xml).toContain('/blog/a%2Fb%3Fc%26d</loc>')
     expect(xml).not.toContain('secret')
+    expect(xml).toContain('https://blichstudio.com/contact</loc>')
   })
   it('fails on repeated pages or upstream failure rather than returning a partial sitemap', async () => {
     await expect(

@@ -34,7 +34,7 @@ const { user, signOut, showAuthModal } = useAuth()
       </div>
       <div class="footer-bottom">
         <NuxtLink to="/">© {{ new Date().getFullYear() }} Blich Studio</NuxtLink
-        ><a href="mailto:filip@blichstudio.com">filip@blichstudio.com</a
+        ><NuxtLink to="/contact">Contact & links</NuxtLink
         ><button
           type="button"
           class="quiet-button"
